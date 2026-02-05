@@ -1,0 +1,42 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+  </PropertyGroup>
+  <ItemGroup>   
+    
+    <PackageVersion Include="DevExpress.CodeParser" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Drawing.Skia" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.CodeAnalysis" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Data" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.DataAccess" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Drawing" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.Api.Xpo.All" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.AspNetCore" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.Security" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.Security.AspNetCore" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.Security.Xpo" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.WebApi" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.WebApi.Xpo" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.ExpressApp.Xpo" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Images" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Office.Core" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Pdf.Core" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Pdf.Drawing" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Persistent.Base" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Persistent.BaseImpl.Xpo" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Printing.Core" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.RichEdit.Core" Version="25.2.3" />
+    <PackageVersion Include="DevExpress.Scheduler.Core" Version="25.2.3" />
+    
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.2" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.9.0" />
+    <PackageVersion Include="Selenium.Support" Version="4.4.0" />
+    <PackageVersion Include="Selenium.WebDriver" Version="4.4.0" />
+    
+    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+</Project>

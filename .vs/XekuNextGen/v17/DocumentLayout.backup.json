@@ -1,0 +1,259 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\anthony\\Desktop\\XekuII\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.apihost\\api\\security\\jwttokenproviderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|solutionrelative:xeku.apihost\\api\\security\\jwttokenproviderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.apihost\\businessobjects\\applicationuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|solutionrelative:xeku.apihost\\businessobjects\\applicationuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.apihost\\startup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|solutionrelative:xeku.apihost\\startup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.apihost\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|solutionrelative:xeku.apihost\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.apihost\\module.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|solutionrelative:xeku.apihost\\module.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.apihost\\businessobjects\\applicationuserlogininfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|solutionrelative:xeku.apihost\\businessobjects\\applicationuserlogininfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.apihost\\databaseupdate\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|solutionrelative:xeku.apihost\\databaseupdate\\updater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.apihost\\api\\security\\authenticationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC6E66CA-5F20-3E36-E4E6-A4DCA5C92D3B}|Xeku.ApiHost\\Xeku.ApiHost.csproj|solutionrelative:xeku.apihost\\api\\security\\authenticationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2E56793F-6099-46DB-A94A-1D0CF0FCBBAA}|Xeku.Generated\\Xeku.Generated.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.generated\\xeku.generated.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{2E56793F-6099-46DB-A94A-1D0CF0FCBBAA}|Xeku.Generated\\Xeku.Generated.csproj|solutionrelative:xeku.generated\\xeku.generated.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1437585C-2F10-4A43-AFB6-7EBD1DDA7446}|Xeku.Generator\\Xeku.Generator.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.generator\\xeku.generator.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{1437585C-2F10-4A43-AFB6-7EBD1DDA7446}|Xeku.Generator\\Xeku.Generator.csproj|solutionrelative:xeku.generator\\xeku.generator.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3BC175E1-D9C4-4945-B5B6-1B9DF5CC6773}|Xeku.Backend\\Xeku.Backend.csproj|c:\\users\\anthony\\desktop\\xekuii\\xeku.backend\\xeku.backend.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{3BC175E1-D9C4-4945-B5B6-1B9DF5CC6773}|Xeku.Backend\\Xeku.Backend.csproj|solutionrelative:xeku.backend\\xeku.backend.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 19,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:132:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:133:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:134:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:135:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:136:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:131:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Startup.cs",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\Startup.cs",
+              "RelativeDocumentMoniker": "Xeku.ApiHost\\Startup.cs",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\Startup.cs",
+              "RelativeToolTip": "Xeku.ApiHost\\Startup.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-05T03:39:39.164Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\Program.cs",
+              "RelativeDocumentMoniker": "Xeku.ApiHost\\Program.cs",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\Program.cs",
+              "RelativeToolTip": "Xeku.ApiHost\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-05T03:39:36.252Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Module.cs",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\Module.cs",
+              "RelativeDocumentMoniker": "Xeku.ApiHost\\Module.cs",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\Module.cs",
+              "RelativeToolTip": "Xeku.ApiHost\\Module.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-05T03:39:32.461Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Updater.cs",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\DatabaseUpdate\\Updater.cs",
+              "RelativeDocumentMoniker": "Xeku.ApiHost\\DatabaseUpdate\\Updater.cs",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\DatabaseUpdate\\Updater.cs",
+              "RelativeToolTip": "Xeku.ApiHost\\DatabaseUpdate\\Updater.cs",
+              "ViewState": "AgIAADAAAAAAAAAAAAA1wDsAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-05T03:38:33.813Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ApplicationUserLoginInfo.cs",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\BusinessObjects\\ApplicationUserLoginInfo.cs",
+              "RelativeDocumentMoniker": "Xeku.ApiHost\\BusinessObjects\\ApplicationUserLoginInfo.cs",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\BusinessObjects\\ApplicationUserLoginInfo.cs",
+              "RelativeToolTip": "Xeku.ApiHost\\BusinessObjects\\ApplicationUserLoginInfo.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-05T03:38:29.332Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ApplicationUser.cs",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\BusinessObjects\\ApplicationUser.cs",
+              "RelativeDocumentMoniker": "Xeku.ApiHost\\BusinessObjects\\ApplicationUser.cs",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\BusinessObjects\\ApplicationUser.cs",
+              "RelativeToolTip": "Xeku.ApiHost\\BusinessObjects\\ApplicationUser.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-05T03:38:25.106Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "JwtTokenProviderService.cs",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\API\\Security\\JwtTokenProviderService.cs",
+              "RelativeDocumentMoniker": "Xeku.ApiHost\\API\\Security\\JwtTokenProviderService.cs",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\API\\Security\\JwtTokenProviderService.cs",
+              "RelativeToolTip": "Xeku.ApiHost\\API\\Security\\JwtTokenProviderService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-05T03:38:21.059Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AuthenticationController.cs",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\API\\Security\\AuthenticationController.cs",
+              "RelativeDocumentMoniker": "Xeku.ApiHost\\API\\Security\\AuthenticationController.cs",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.ApiHost\\API\\Security\\AuthenticationController.cs",
+              "RelativeToolTip": "Xeku.ApiHost\\API\\Security\\AuthenticationController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-05T03:38:15.549Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Xeku.Generated",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.Generated\\Xeku.Generated.csproj",
+              "RelativeDocumentMoniker": "Xeku.Generated\\Xeku.Generated.csproj",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.Generated\\Xeku.Generated.csproj",
+              "RelativeToolTip": "Xeku.Generated\\Xeku.Generated.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAABCAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-02-05T03:37:30.617Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Xeku.Generator",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.Generator\\Xeku.Generator.csproj",
+              "RelativeDocumentMoniker": "Xeku.Generator\\Xeku.Generator.csproj",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.Generator\\Xeku.Generator.csproj",
+              "RelativeToolTip": "Xeku.Generator\\Xeku.Generator.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-02-05T03:36:07.196Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Xeku.Backend",
+              "DocumentMoniker": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.Backend\\Xeku.Backend.csproj",
+              "RelativeDocumentMoniker": "Xeku.Backend\\Xeku.Backend.csproj",
+              "ToolTip": "C:\\Users\\anthony\\Desktop\\XekuII\\Xeku.Backend\\Xeku.Backend.csproj",
+              "RelativeToolTip": "Xeku.Backend\\Xeku.Backend.csproj",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAABkAAABAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-02-05T03:34:59.257Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
