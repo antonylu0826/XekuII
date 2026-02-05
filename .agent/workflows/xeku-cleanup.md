@@ -1,6 +1,7 @@
 ﻿---
-description: 清理 XekuII 專案生成的代碼與暫存檔 (修復版)
+description: 清理 XekuII 專案生成的代碼與暫存檔
 ---
+
 1. 移除實體定義
 // turbo
 Remove-Item -Path "entities/*.xeku.yaml" -Force -ErrorAction SilentlyContinue

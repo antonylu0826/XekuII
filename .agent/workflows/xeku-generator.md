@@ -1,6 +1,7 @@
 ﻿---
-description: 執行 XekuII 代碼生成器 (修復版)
+description: 執行 XekuII 代碼生成器
 ---
+
 1. 確保已安裝 .NET 8 SDK
 // turbo
 dotnet --version

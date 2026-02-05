@@ -1,6 +1,7 @@
 ﻿---
-description: XekuII 實體定義 YAML 撰寫指南 (修復版)
+description: XekuII 實體定義 YAML 撰寫指南
 ---
+
 # XekuII YAML 指南
 
 在 `entities/` 目錄下建立 `.xeku.yaml` 檔案。

@@ -6,7 +6,8 @@
 - **名稱**: XekuII Next Gen
 - **框架**: .NET 8, DevExpress XAF (Blazor/WebAPI)
 - **資料庫**: LocalDB (`XekuII.ApiHost`) / InMemory (測試用)
-- **架構原則**: YAML 驅動開發 (Entity Definitions) -> 自動化代碼生成 (Generator)
+- **架構原則**: YAML 驅動開發 -> 自動化代碼生成
+- **核心指南**: [.agent/SKILL.md](file:///d:/Source/Private/XekuII/.agent/SKILL.md) (開發必讀)
 
 ## 常用指令
 

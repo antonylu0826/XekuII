@@ -14,7 +14,7 @@
 *.nupkg
 
 ## [Tools]
-.agent/
+##.agent/
 .gemini/
 .idea/
 .vscode/
