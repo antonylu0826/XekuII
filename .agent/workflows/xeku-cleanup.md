@@ -1,61 +1,30 @@
+﻿---
+description: 清理 XekuII 專案生成的代碼與暫存檔 (修復版)
 ---
-description: 清空?��??��?式碼，�??��??�架構�??�於?�新測試 Generator
----
-
-# XekuII 清空?��?檔�?
-
-?��??�說?��?何�?�?Generator ?��??��?案�?保�?機制?��?以便?�新測試??
-
----
-
-## 快速�?空�?�?
-
-// turbo-all
-
-### Step 1: 清空實�?定義
-```powershell
-Remove-Item -Path "entities/*.XekuII.yaml" -Force -ErrorAction SilentlyContinue
-```
-
-### Step 2: 清空後端 Business Objects
-```powershell
-Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorAction SilentlyContinue
-```
-
-### Step 3: 清空後端 API Controllers
-```powershell
-Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "XekuII.ApiHost/API/*ExtendedController.cs" -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "XekuII.ApiHost/API/StatsController.cs" -Force -ErrorAction SilentlyContinue
-```
-
----
-
-## 保�??��??�架�?
-
-清空後�?以�?檔�?/資�?夾�?保�?�?
-
-| 類�? | 路�? | 說�? |
-|:---|:---|:---|
-| 後端 | `XekuII.ApiHost/API/StatsController.cs` | 統�?端�? |
-| 後端 | `XekuII.ApiHost/API/Security/` | 認�? API |
-| 後端 | `XekuII.ApiHost/Startup.cs` | ?��?設�? |
-| 後端 | `XekuII.ApiHost/BusinessObjects/ApplicationUser*.cs` | 使用??BO |
-
-| Generator | `XekuII.Generator/` | ?��?Generator 專�? |
-
----
-
-## 驗�?清空
-
+1. 移除實體定義
 // turbo
-```powershell
-# 驗�?後端建置
-dotnet build XekuII.ApiHost/XekuII.ApiHost.csproj --verbosity quiet
-```
+Remove-Item -Path "entities/*.xeku.yaml" -Force -ErrorAction SilentlyContinue
 
----
+2. 移除生成的 Business Objects
+// turbo
+Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorAction SilentlyContinue
 
-## ?�建流�?
+3. 移除生成的 API Controllers
+// turbo
+Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force -ErrorAction SilentlyContinue
 
-清空後�?使用 `/XekuII-generator` 工�?流�?從零?��?建�??�實體�?
+4. 移除生成的 Extended Controllers (若有)
+// turbo
+Remove-Item -Path "XekuII.ApiHost/API/*ExtendedController.cs" -Force -ErrorAction SilentlyContinue
+
+5. 遞迴移除殘留的控制器
+// turbo
+Get-ChildItem -Path "XekuII.ApiHost/API" -Include "*Controller.Generated.cs" -Recurse | Remove-Item -Force -ErrorAction SilentlyContinue
+
+6. 移除測試腳本與日誌
+// turbo
+Remove-Item -Path "OrderSystemTest.ps1", "RuntimeTest.ps1", "db_update.log", "start_debug.log", "temp.cs" -Force -ErrorAction SilentlyContinue
+
+7. 清理建置產物
+// turbo
+Get-ChildItem -Include bin,obj -Recurse | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue

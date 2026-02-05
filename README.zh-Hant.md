@@ -1,4 +1,4 @@
-# XekuII Next Generation Framework
+﻿# XekuII Next Generation Framework
 
 XekuII 是一個基於 **DevExpress XAF** 與 **.NET 8** 的現代化、AI 原生網頁應用程式框架。它透過 Yaml 定義檔驅動與自動化代碼生成技術，簡化了後端開發流程，讓開發者能專注於核心業務邏輯，而將繁瑣的 boilerplate 交由框架處理。
 
