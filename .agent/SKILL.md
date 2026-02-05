@@ -1,105 +1,417 @@
-# XekuII Next Gen 技能開發手冊 (SKILL.md)
+# XekuII 開發技能手冊
 
-> 此文件定義了 XekuII 專案的核心開發技能、YAML 驅動架構及其自動化工作流。
-
-## 1. 核心開發哲學：YAML 驅動 (YAML-Driven Development)
-
-XekuII 的開發遵循「模型先行」原則：
-1. **定義**: 在 `entities/` 目錄下撰寫 YAML 實體定義。
-2. **生成**: 透過 `XekuII.Generator` 自動產生 Business Objects (XPO) 與 Web API Controllers。
-3. **擴充**: 透過 `partial class` 在非生成檔案中擴充業務邏輯、動作 (Action) 或自定義行為。
+> AI 代理在操作 XekuII 專案時的完整參考。涵蓋 YAML 驅動架構、代碼生成、擴展機制與疑難排解。
 
 ---
 
-## 2. YAML 實體定義指南
+## 1. 核心開發哲學
 
-所有實體定義檔案必須以 `.xeku.yaml` 為副檔名，存放於 `entities/`。
+XekuII 遵循 **YAML 驅動開發（YAML-Driven Development）** 模式：
 
-### 基本結構範例
+```
+定義 YAML → 執行 Generator → 使用生成的代碼 → 透過 partial class 擴展
+```
+
+**關鍵原則：**
+- `*.Generated.cs` 檔案由 Generator 產出，**嚴禁手動修改**
+- 所有客製化邏輯透過 `partial class` 在獨立檔案中實作
+- YAML 是唯一的真相來源（Single Source of Truth）
+- 重新生成前務必清除舊的 Generated 檔案
+
+---
+
+## 2. YAML 實體定義完整規格
+
+所有定義檔必須以 `.xeku.yaml` 為副檔名，存放於 `entities/` 目錄。
+
+### 2.1 完整結構範例
+
 ```yaml
-entity: Product          # 實體名稱（對應 C# 類別名）
-icon: BO_Product        # XAF 使用的圖示
-fields:                 # 欄位清單
-  - name: Code
+entity: Order
+caption: 訂單
+icon: BO_Order
+dbTable: Orders                        # 選用：自訂表格名稱
+description: Sales order management    # AI 可讀的用途描述
+
+fields:
+  - name: OrderNumber
     type: string
     required: true
-    indexed: true
-  - name: Price
+    length: 20
+    label: 訂單編號
+    description: Unique order number
+    validations:
+      - regex: "^ORD-\\d{6}$"
+        message: "Order number must be like ORD-000001"
+
+  - name: OrderDate
+    type: datetime
+    required: true
+    label: 訂單日期
+    default: "now"
+
+  - name: TotalAmount
     type: decimal
-    defaultValue: 0
-  - name: Quantity
-    type: int
-```
+    label: 總金額
+    formula: "[Items].Sum([Subtotal])"
+    calculationType: persistent
 
-### 支援欄位型別 (Types)
-| YAML 型別 | C# 型別 | 說明 |
-| :--- | :--- | :--- |
-| `string` | `string` | 字串，預設長度為 100 (可在 XAF 屬性自定義) |
-| `int` | `int` | 整數 |
-| `decimal` | `decimal` | 金額、高精度數值 |
-| `bool` | `bool` | 布林值 |
-| `datetime` | `DateTime` | 日期時間 |
-| `guid` | `Guid` | 全域唯一識別碼 |
+  - name: Note
+    type: string
+    length: 500
+    label: 備註
 
-### 關聯性 (Relations)
-- **Many-to-One (引用)**:
-  ```yaml
-  - name: Category
+  - name: Status
+    type: OrderStatus
+    label: 訂單狀態
+    default: "Draft"
+
+  - name: IsUrgent
+    type: bool
+    label: 急件
+    default: "false"
+
+relations:
+  - name: Customer
     type: reference
-    entity: ProductCategory
-  ```
-- **One-to-Many (明細份項目)**:
-  ```yaml
+    target: Customer
+    required: true
+    label: 客戶
+    lookupField: Name
+    description: Customer who placed this order
+
   - name: Items
     type: detail
-    entity: OrderItem
-  ```
+    target: OrderItem
+    label: 訂單明細
+    cascade: delete
+    description: Line items of this order
+
+enums:
+  - name: OrderStatus
+    description: Order processing lifecycle
+    members:
+      - name: Draft
+        value: 0
+        label: 草稿
+        description: Order is being prepared
+      - name: Confirmed
+        value: 1
+        label: 已確認
+      - name: Shipped
+        value: 2
+        label: 已出貨
+      - name: Completed
+        value: 3
+        label: 已完成
+      - name: Cancelled
+        value: 4
+        label: 已取消
+
+rules:
+  - trigger: BeforeSave
+    script: ValidateOrder
+```
+
+### 2.2 欄位型別映射
+
+| YAML 型別 | C# 型別 | TypeScript 型別 | 說明 |
+|-----------|---------|----------------|------|
+| `string` | `string` | `string` | 字串，可用 `length` 設定最大長度 |
+| `int` | `int` | `number` | 整數 |
+| `decimal` | `decimal` | `number` | 高精度數值（金額等） |
+| `double` | `double` | `number` | 浮點數 |
+| `bool` | `bool` | `boolean` | 布林值 |
+| `datetime` | `DateTime` | `string` (ISO) | 日期時間 |
+| `guid` | `Guid` | `string` | 全域唯一識別碼 |
+| `{EnumName}` | `{EnumName}` | `enum` | 實體範圍列舉 |
+
+### 2.3 驗證規則語法
+
+```yaml
+validations:
+  # 範圍驗證
+  - range: ">0"          # ValueComparisonType.GreaterThan
+  - range: ">=1"         # ValueComparisonType.GreaterThanOrEqual
+  - range: "<100"        # ValueComparisonType.LessThan
+  - range: "<=99"        # ValueComparisonType.LessThanOrEqual
+  - range: "1-100"       # RuleRange (含兩端)
+
+  # 最小/最大值
+  - min: 0               # GreaterThanOrEqual
+  - max: 999             # LessThanOrEqual
+
+  # 正規表達式
+  - regex: "^[A-Z]{2}-\\d{4}$"
+
+  # XAF Criteria 表達式
+  - criteria: "[EndDate] > [StartDate]"
+
+  # 自訂錯誤訊息（附加在任一規則上）
+  - range: ">=0"
+    message: "金額不可為負數"
+```
+
+### 2.4 預設值語法
+
+| 型別 | YAML 值 | 生成的 C# |
+|------|---------|-----------|
+| `string` | `"NEW"` | `"NEW"` |
+| `int` | `"0"` | `0` |
+| `decimal` | `"100.5"` | `100.5m` |
+| `bool` | `"true"` / `"false"` | `true` / `false` |
+| `datetime` | `"now"` | `DateTime.Now` |
+| `datetime` | `"today"` | `DateTime.Today` |
+| `datetime` | `"utcnow"` | `DateTime.UtcNow` |
+| `guid` | `"new"` | `Guid.NewGuid()` |
+| `guid` | `"empty"` | `Guid.Empty` |
+| `{Enum}` | `"Draft"` | `{EnumName}.Draft` |
+
+### 2.5 計算欄位
+
+**PersistentAlias**（XPO Criteria 語法，可參與資料庫查詢）：
+```yaml
+- name: Total
+  type: decimal
+  formula: "[Quantity] * [UnitPrice]"
+  calculationType: persistent    # 預設值，可省略
+```
+
+**Getter**（C# 表達式，僅在記憶體中計算）：
+```yaml
+- name: FullName
+  type: string
+  formula: "FirstName + \" \" + LastName"
+  calculationType: getter
+```
+
+### 2.6 關聯類型
+
+**Reference（多對一）** — 產生外鍵屬性 + `[Association]`：
+```yaml
+relations:
+  - name: Category
+    type: reference
+    target: ProductCategory
+    required: true           # 必填外鍵
+    lookupField: Name        # 查詢時顯示的欄位
+```
+
+**Detail（一對多，聚合）** — 產生 `XPCollection` + `[Aggregated]`：
+```yaml
+relations:
+  - name: Items
+    type: detail
+    target: OrderItem
+    cascade: delete          # 級聯刪除
+```
+
+### 2.7 自動反向關聯
+
+Generator 會自動分析所有實體之間的關係：
+
+- **配對關係**：若 A 定義 `reference → B` 且 B 定義 `detail → A`，兩端共用同一個 `AssociationName`
+- **單向關係**：若只有一端定義關聯，Generator 自動在另一端生成反向屬性
+  - `reference → TargetEntity` → 在 Target 生成 `XPCollection<SourceEntity>`
+  - `detail → TargetEntity` → 在 Target 生成 `SourceEntity` reference 屬性
 
 ---
 
-## 3. 自動化指令集 (Workflows)
+## 3. 常用指令
 
-### 3.1 代碼生成與同步
-當 YAML 變更時，立即重新產生代碼：
+### 3.1 代碼生成
+
 ```powershell
-dotnet run --project XekuII.Generator -- ./entities --output ./XekuII.ApiHost/BusinessObjects --controllers ./XekuII.ApiHost/API
+# 完整生成（BO + API Controller）
+dotnet run --project XekuII.Generator -- ./entities `
+  --output ./XekuII.ApiHost/BusinessObjects `
+  --controllers ./XekuII.ApiHost/API
+
+# 僅生成 BO（不含 Controller）
+dotnet run --project XekuII.Generator -- ./entities `
+  --output ./XekuII.ApiHost/BusinessObjects
 ```
+
+參數說明：
+- 第一個位置參數：實體 YAML 目錄路徑
+- `--output`：BO 輸出目錄
+- `--controllers`：Controller 輸出目錄（省略則不生成）
+- `--namespace`：目標命名空間（預設 `XekuII.ApiHost.BusinessObjects`）
 
 ### 3.2 資料庫更新
-當生成代碼導致 XPO 結構變更時，執行資料庫同步：
+
 ```powershell
-dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj -- --updateDatabase --forceUpdate --silent
+dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj `
+  -- --updateDatabase --forceUpdate --silent
 ```
 
-### 3.3 專案清理 (高度推薦)
-在重新生成前，清理舊有的 `.Generated.cs` 以避免殘留：
-- `Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force`
-- `Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force`
+### 3.3 啟動應用程式
+
+```powershell
+dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj
+```
+
+- API 基礎位址：`http://localhost:5000`
+- Swagger UI：`http://localhost:5000/swagger`
+
+### 3.4 清除生成檔案
+
+```powershell
+# 清除 BO
+Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorAction SilentlyContinue
+
+# 清除 Controller
+Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force -ErrorAction SilentlyContinue
+
+# 清除建置產物
+Get-ChildItem -Include bin,obj -Recurse | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+```
+
+### 3.5 XekuII CLI
+
+```powershell
+# 使用 CLI 生成
+XekuII.CLI generate --entities=./entities --output=./XekuII.ApiHost/BusinessObjects --api --api-output=./XekuII.ApiHost/API
+
+# 位置參數形式
+XekuII.CLI generate ./entities ./XekuII.ApiHost/BusinessObjects XekuII.ApiHost.BusinessObjects
+```
 
 ---
 
-## 4. 進階開發技巧
+## 4. 生成產物說明
 
-### Partial Class 運用
-產生的產物通常帶有 `.Generated.cs` 標記。不應該手動修改這些檔案。
-若要增加驗證邏輯或方法，請建立不帶 `.Generated` 的同名類別檔案：
+### 4.1 Business Object（`*.Generated.cs`）
+
+每個實體生成一個 `partial class`，包含：
+- XPO `BaseObject` 繼承與建構子
+- 所有欄位的 backing field + property（含 `SetPropertyValue` 通知機制）
+- `[Description]`、`[XafDisplayName]`、`[RuleRequiredField]` 等 Attribute
+- 驗證規則 Attribute（`[RuleValueComparison]`、`[RuleRange]`、`[RuleRegularExpression]`、`[RuleCriteria]`）
+- Reference 關聯（`[Association]`）
+- Detail 集合（`[Association, Aggregated]` + `XPCollection`）
+- 自動生成的反向關聯
+- 列舉型別（在類別外、同命名空間中）
+- `AfterConstruction()` 預設值覆寫
+- `OnSaving()` 業務規則呼叫
+- Partial method 宣告（供手動實作）
+
+### 4.2 API Controller（`*Controller.Generated.cs`）
+
+每個實體生成一個 Controller + 相關 DTO，包含：
+
+**端點：**
+| 方法 | 路由 | 說明 |
+|------|------|------|
+| GET | `/api/{entities}` | 列出全部（含 reference ID/Name） |
+| GET | `/api/{entities}/{id}` | 依 ID 取得 |
+| GET | `/api/{entities}/{id}/details` | 完整細節（含關聯物件） |
+| POST | `/api/{entities}` | 建立（使用 DTO） |
+| PUT | `/api/{entities}/{id}` | 更新（使用 DTO） |
+| DELETE | `/api/{entities}/{id}` | 刪除 |
+
+**Detail 端點（每個 detail 關聯一組）：**
+| 方法 | 路由 | 說明 |
+|------|------|------|
+| GET | `/api/{entities}/{id}/{detailName}` | 列出明細 |
+| POST | `/api/{entities}/{id}/{detailName}` | 新增明細 |
+| PUT | `/api/{entities}/{id}/{detailName}/{itemId}` | 更新明細 |
+| DELETE | `/api/{entities}/{id}/{detailName}/{itemId}` | 刪除明細 |
+
+**DTO：**
+- `{Entity}Dto` — 建立/更新用（排除計算欄位與唯讀欄位）
+- `{Entity}DetailsDto` — 回應用（含所有欄位 + 關聯物件）
+- `{Entity}{RefTarget}RefDto` — Reference 物件摘要（Oid + Name）
+- `{Entity}{DetailTarget}ItemDto` — Detail 項目摘要
+- `{Entity}Add{DetailTarget}Request` — 新增明細請求
+- `{Entity}Update{DetailTarget}Request` — 更新明細請求
+
+---
+
+## 5. 擴展機制：Partial Class
+
+### 5.1 擴展業務邏輯
+
 ```csharp
-// 在 XekuII.ApiHost/BusinessObjects/Product.cs
-public partial class Product {
-    protected override void OnSaving() {
-        base.OnSaving();
-        // 自定義存檔邏輯
+// BusinessObjects/Order.cs（手動建立）
+public partial class Order
+{
+    // 實作 Generator 宣告的 partial method
+    partial void ValidateOrder()
+    {
+        if (Items.Count == 0)
+            throw new UserFriendlyException("訂單至少需要一個項目。");
+    }
+
+    // 自訂方法
+    public void CalculateDiscount(decimal rate)
+    {
+        Discount = TotalAmount * rate;
+    }
+
+    // 覆寫生命週期方法
+    protected override void OnSaving()
+    {
+        base.OnSaving();  // 重要：保留 Generator 生成的 BeforeSave 邏輯
+        ModifiedDate = DateTime.Now;
     }
 }
 ```
 
-### 命名空間修復
-若 API Controller 找不到，請檢查 `XekuII.Generator` 是否輸出了正確的命名空間。預設應為 `Xeku.ApiHost.Controllers` (或與專案啟動類別一致)。
+### 5.2 注意事項
+
+- 如果 Generator 已生成 `OnSaving()` override（因為 YAML 有 `BeforeSave` 規則），手動覆寫時必須呼叫 `base.OnSaving()` 以保留自動邏輯
+- Partial method 的簽名由 Generator 宣告，手動檔案只需提供實作
+- 命名空間必須與 Generator 輸出一致（預設 `XekuII.ApiHost.BusinessObjects`）
 
 ---
 
-## 5. 常見問題 (Troubleshooting)
+## 6. 認證與安全
 
-- **SQL 衝突**: 若更新資料庫失敗，通常是欄位型別變更導致。請使用 `--forceUpdate` 或手動清理資料庫。
-- **Swagger 未顯示**: 檢查 Controller 是否繼承自正確的內容，且具備 `[Route("api/[controller]")]`。
-- **重複產生**: 確保 `entities/` 下沒有內容重複、名稱相同的 YAML 檔案。
+### 6.1 JWT 認證
+
+```powershell
+# 取得 Token
+$body = '{"userName":"Admin","password":""}'
+$response = Invoke-RestMethod -Uri "http://localhost:5000/api/Authentication/Authenticate" `
+  -Method Post -ContentType "application/json" -Body $body
+
+# 使用 Token
+$headers = @{ Authorization = "Bearer $($response.token)" }
+Invoke-RestMethod -Uri "http://localhost:5000/api/customers" -Headers $headers
+```
+
+### 6.2 預設帳號
+
+| 帳號 | 密碼 | 角色 | 權限 |
+|------|------|------|------|
+| Admin | （空白） | Administrators | 完全存取 |
+| User | （空白） | Default | 受限存取 |
+
+---
+
+## 7. 疑難排解
+
+| 問題 | 原因 | 解決方式 |
+|------|------|----------|
+| 資料庫更新失敗 | 欄位型別變更導致 SQL 衝突 | 使用 `--forceUpdate`，或手動刪除資料庫重建 |
+| Swagger 未顯示 Controller | Controller 命名空間或路由設定錯誤 | 確認 Controller 繼承 `ControllerBase` 且有 `[Route("api/[controller]")]` |
+| 生成檔案殘留 | 重命名/刪除實體後舊檔案未清除 | 重新生成前執行清除指令（見 3.4） |
+| 反向關聯衝突 | 兩個實體對同一目標有相同屬性名 | Generator 的 `AnalyzeRelationships` 會避免重複，若仍衝突請檢查 YAML 命名 |
+| 列舉型別找不到 | 欄位 type 與 enum name 大小寫不一致 | enum name 使用 PascalCase，欄位 type 完全對應 |
+| 建置錯誤：找不到型別 | 目標實體尚未定義 YAML | 確保所有被 reference/detail 引用的實體都有對應的 `.xeku.yaml` |
+
+---
+
+## 8. 開發工作流程摘要
+
+```
+1. 建立/修改 entities/*.xeku.yaml
+2. 清除舊的 Generated 檔案（避免殘留）
+3. 執行 Generator（BO + Controller）
+4. 更新資料庫（若結構有變）
+5. 啟動應用程式並驗證
+6. 如需客製化，建立 partial class 擴展
+```
+
+**詳細步驟請參考 `.agent/workflows/` 目錄下的工作流程文件。**
