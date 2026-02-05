@@ -1,0 +1,26 @@
+## [Visual Studio]
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## [Build Results]
+[Bb]in/
+[Oo]bj/
+*.exe
+*.dll
+*.pdb
+*.nupkg
+
+## [Tools]
+.agent/
+.gemini/
+.idea/
+.vscode/
+
+## [Others]
+*.log
+.DS_Store
+node_modules/
+dist/
