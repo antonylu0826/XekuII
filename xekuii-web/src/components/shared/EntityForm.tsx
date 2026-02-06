@@ -117,7 +117,7 @@ export function EntityForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={(e) => { e.stopPropagation(); form.handleSubmit(onSubmit)(e); }} className="space-y-4">
         {rows.map((row, i) => (
           <div key={i} className="flex gap-4">
             {row.fields.map((name) => {

@@ -130,8 +130,12 @@ public class ControllerCodeGenerator
         // Include reference IDs and names
         foreach (var reference in references)
         {
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{reference.Name}Id = e.{reference.Name} != null ? e.{reference.Name}.Oid : (Guid?)null,");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{reference.Name}Name = e.{reference.Name} != null ? e.{reference.Name}.ToString() : null,");
+            var displayField = ResolveDisplayField(reference);
+            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{ToCamelCase(reference.Name)}Id = e.{reference.Name} != null ? e.{reference.Name}.Oid : (Guid?)null,");
+            if (displayField != null)
+                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{reference.Name}Name = e.{reference.Name} != null ? e.{reference.Name}.{displayField} : null,");
+            else
+                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{reference.Name}Name = e.{reference.Name} != null ? e.{reference.Name}.ToString() : null,");
         }
         sb.AppendLine($"{Indent}{Indent}{Indent}}})");
         sb.AppendLine($"{Indent}{Indent}{Indent}.ToList();");
@@ -161,8 +165,12 @@ public class ControllerCodeGenerator
         // Include reference IDs and names
         foreach (var reference in references)
         {
-            sb.AppendLine($"{Indent}{Indent}{Indent}{reference.Name}Id = item.{reference.Name}?.Oid,");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{reference.Name}Name = item.{reference.Name}?.ToString(),");
+            var displayField = ResolveDisplayField(reference);
+            sb.AppendLine($"{Indent}{Indent}{Indent}{ToCamelCase(reference.Name)}Id = item.{reference.Name}?.Oid,");
+            if (displayField != null)
+                sb.AppendLine($"{Indent}{Indent}{Indent}{ToCamelCase(reference.Name)}Name = item.{reference.Name}?.{displayField},");
+            else
+                sb.AppendLine($"{Indent}{Indent}{Indent}{ToCamelCase(reference.Name)}Name = item.{reference.Name}?.ToString(),");
         }
         sb.AppendLine($"{Indent}{Indent}}});");
         sb.AppendLine($"{Indent}}}");
@@ -195,10 +203,14 @@ public class ControllerCodeGenerator
         // Include reference objects
         foreach (var reference in references)
         {
+            var displayField = ResolveDisplayField(reference);
             sb.AppendLine($"{Indent}{Indent}{Indent}{reference.Name} = item.{reference.Name} != null ? new {entityName}{reference.Target}RefDto");
             sb.AppendLine($"{Indent}{Indent}{Indent}{{");
             sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}Oid = item.{reference.Name}.Oid,");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}Name = item.{reference.Name}.ToString() ?? string.Empty,");
+            if (displayField != null)
+                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}Name = item.{reference.Name}.{displayField} ?? string.Empty,");
+            else
+                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}Name = item.{reference.Name}.ToString() ?? string.Empty,");
             sb.AppendLine($"{Indent}{Indent}{Indent}}} : null,");
         }
         // Include detail collections
@@ -218,8 +230,12 @@ public class ControllerCodeGenerator
                     .ToList();
                 foreach (var rel in detailRefs)
                 {
+                    var relDisplay = ResolveDisplayField(rel);
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{rel.Name}Id = d.{rel.Name}?.Oid ?? Guid.Empty,");
-                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{rel.Name}Name = d.{rel.Name}?.ToString(),");
+                    if (relDisplay != null)
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{ToCamelCase(rel.Name)}Name = d.{rel.Name}?.{relDisplay},");
+                    else
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{ToCamelCase(rel.Name)}Name = d.{rel.Name}?.ToString(),");
                 }
             }
             sb.AppendLine($"{Indent}{Indent}{Indent}}}).ToList() ?? new(),");
@@ -245,7 +261,10 @@ public class ControllerCodeGenerator
         // Set fields
         foreach (var field in writableFields)
         {
-            sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name};");
+            if (field.Type.ToLower() == "datetime")
+                sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name}.GetValueOrDefault(DateTime.Today);");
+            else
+                sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name};");
         }
 
         // Handle reference relations
@@ -253,9 +272,9 @@ public class ControllerCodeGenerator
         {
             sb.AppendLine();
             sb.AppendLine($"{Indent}{Indent}// Set {reference.Name} reference");
-            sb.AppendLine($"{Indent}{Indent}if (dto.{reference.Name}Id.HasValue)");
+            sb.AppendLine($"{Indent}{Indent}if (dto.{ToCamelCase(reference.Name)}Id.HasValue)");
             sb.AppendLine($"{Indent}{Indent}{{");
-            sb.AppendLine($"{Indent}{Indent}{Indent}item.{reference.Name} = objectSpace.GetObjectByKey<{reference.Target}>(dto.{reference.Name}Id.Value);");
+            sb.AppendLine($"{Indent}{Indent}{Indent}item.{reference.Name} = objectSpace.GetObjectByKey<{reference.Target}>(dto.{ToCamelCase(reference.Name)}Id.Value);");
             sb.AppendLine($"{Indent}{Indent}}}");
         }
 
@@ -283,7 +302,10 @@ public class ControllerCodeGenerator
         // Update fields (excluding calculated and readonly)
         foreach (var field in writableFields)
         {
-            sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name};");
+            if (field.Type.ToLower() == "datetime")
+                sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name}.GetValueOrDefault(DateTime.Today);");
+            else
+                sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name};");
         }
 
         // Handle reference relations
@@ -291,9 +313,9 @@ public class ControllerCodeGenerator
         {
             sb.AppendLine();
             sb.AppendLine($"{Indent}{Indent}// Update {reference.Name} reference");
-            sb.AppendLine($"{Indent}{Indent}if (dto.{reference.Name}Id.HasValue)");
+            sb.AppendLine($"{Indent}{Indent}if (dto.{ToCamelCase(reference.Name)}Id.HasValue)");
             sb.AppendLine($"{Indent}{Indent}{{");
-            sb.AppendLine($"{Indent}{Indent}{Indent}item.{reference.Name} = objectSpace.GetObjectByKey<{reference.Target}>(dto.{reference.Name}Id.Value);");
+            sb.AppendLine($"{Indent}{Indent}{Indent}item.{reference.Name} = objectSpace.GetObjectByKey<{reference.Target}>(dto.{ToCamelCase(reference.Name)}Id.Value);");
             sb.AppendLine($"{Indent}{Indent}}}");
             sb.AppendLine($"{Indent}{Indent}else");
             sb.AppendLine($"{Indent}{Indent}{{");
@@ -357,8 +379,12 @@ public class ControllerCodeGenerator
                 .ToList();
             foreach (var rel in targetRefs)
             {
+                var relDisplay = ResolveDisplayField(rel);
                 sb.Append($", {rel.Name}Id = d.{rel.Name}?.Oid ?? Guid.Empty");
-                sb.Append($", {rel.Name}Name = d.{rel.Name}?.ToString()");
+                if (relDisplay != null)
+                    sb.Append($", {ToCamelCase(rel.Name)}Name = d.{rel.Name}?.{relDisplay}");
+                else
+                    sb.Append($", {ToCamelCase(rel.Name)}Name = d.{rel.Name}?.ToString()");
             }
         }
         sb.AppendLine(" }).ToList() ?? new();");
@@ -382,7 +408,12 @@ public class ControllerCodeGenerator
         if (_entityMap != null && _entityMap.TryGetValue(detailTarget, out var postTargetDef))
         {
             foreach (var f in postTargetDef.Fields.Where(f => !IsCalculatedField(f) && !f.Readonly))
-                sb.AppendLine($"{Indent}{Indent}item.{f.Name} = request.{f.Name};");
+            {
+                if (f.Type.ToLower() == "datetime")
+                    sb.AppendLine($"{Indent}{Indent}item.{f.Name} = request.{f.Name}.GetValueOrDefault(DateTime.Today);");
+                else
+                    sb.AppendLine($"{Indent}{Indent}item.{f.Name} = request.{f.Name};");
+            }
 
             // Set reference relations (exclude the back-reference to parent and detail relations)
             var targetRefs = postTargetDef.Relations
@@ -426,7 +457,12 @@ public class ControllerCodeGenerator
         if (_entityMap != null && _entityMap.TryGetValue(detailTarget, out var putTargetDef))
         {
             foreach (var f in putTargetDef.Fields.Where(f => !IsCalculatedField(f) && !f.Readonly))
-                sb.AppendLine($"{Indent}{Indent}item.{f.Name} = request.{f.Name};");
+            {
+                if (f.Type.ToLower() == "datetime")
+                    sb.AppendLine($"{Indent}{Indent}item.{f.Name} = request.{f.Name}.GetValueOrDefault(DateTime.Today);");
+                else
+                    sb.AppendLine($"{Indent}{Indent}item.{f.Name} = request.{f.Name};");
+            }
 
             // Update reference relations (exclude the back-reference to parent and detail relations)
             var targetRefs = putTargetDef.Relations
@@ -503,7 +539,7 @@ public class ControllerCodeGenerator
         // Reference IDs
         foreach (var reference in references)
         {
-            sb.AppendLine($"{Indent}public Guid? {reference.Name}Id {{ get; set; }}");
+            sb.AppendLine($"{Indent}public Guid? {ToCamelCase(reference.Name)}Id {{ get; set; }}");
         }
 
         sb.AppendLine("}");
@@ -584,7 +620,7 @@ public class ControllerCodeGenerator
             foreach (var rel in itemDtoRefs)
             {
                 sb.AppendLine($"{Indent}public Guid {rel.Name}Id {{ get; set; }}");
-                sb.AppendLine($"{Indent}public string? {rel.Name}Name {{ get; set; }}");
+                sb.AppendLine($"{Indent}public string? {ToCamelCase(rel.Name)}Name {{ get; set; }}");
             }
             sb.AppendLine("}");
             sb.AppendLine();
@@ -662,7 +698,7 @@ public class ControllerCodeGenerator
             "string" => "string",
             "int" => "int",
             "decimal" => "decimal",
-            "datetime" => "DateTime",
+            "datetime" => "DateTime?",
             "bool" => "bool",
             "guid" => "Guid",
             _ => yamlType // Return as-is for custom types/enums from other entities
@@ -675,5 +711,31 @@ public class ControllerCodeGenerator
     private bool IsCalculatedField(FieldDefinition field)
     {
         return !string.IsNullOrEmpty(field.Formula);
+    }
+
+    /// <summary>
+    /// Resolve the display field name for a reference relation.
+    /// Uses LookupField if specified, otherwise finds a suitable string field from the target entity,
+    /// falls back to ToString() if nothing found.
+    /// </summary>
+    private string ResolveDisplayField(RelationDefinition reference)
+    {
+        // Use explicit lookupField if specified
+        if (!string.IsNullOrEmpty(reference.LookupField))
+            return reference.LookupField;
+
+        // Try to find a suitable field from the target entity
+        if (_entityMap != null && _entityMap.TryGetValue(reference.Target, out var targetEntity))
+        {
+            var displayField = targetEntity.Fields.FirstOrDefault(f => f.Name.Equals("Name", StringComparison.OrdinalIgnoreCase) && f.Type.ToLower() == "string")
+                ?? targetEntity.Fields.FirstOrDefault(f => f.Name.Equals("Code", StringComparison.OrdinalIgnoreCase) && f.Type.ToLower() == "string")
+                ?? targetEntity.Fields.FirstOrDefault(f => f.Name.Equals("Title", StringComparison.OrdinalIgnoreCase) && f.Type.ToLower() == "string")
+                ?? targetEntity.Fields.FirstOrDefault(f => f.Type.ToLower() == "string" && string.IsNullOrEmpty(f.Formula));
+            if (displayField != null)
+                return displayField.Name;
+        }
+
+        // No suitable field found
+        return null!;
     }
 }

@@ -60,6 +60,13 @@ public class CSharpCodeGenerator
 
         // Class attributes
         sb.AppendLine("[DefaultClassOptions]");
+        // DefaultProperty: use first string field named Name/Code/Title, else first string field
+        var defaultPropField = entity.Fields.FirstOrDefault(f => f.Name.Equals("Name", StringComparison.OrdinalIgnoreCase) && f.Type.ToLower() == "string")
+            ?? entity.Fields.FirstOrDefault(f => f.Name.Equals("Code", StringComparison.OrdinalIgnoreCase) && f.Type.ToLower() == "string")
+            ?? entity.Fields.FirstOrDefault(f => f.Name.Equals("Title", StringComparison.OrdinalIgnoreCase) && f.Type.ToLower() == "string")
+            ?? entity.Fields.FirstOrDefault(f => f.Type.ToLower() == "string" && string.IsNullOrEmpty(f.Formula));
+        if (defaultPropField != null)
+            sb.AppendLine($"[DefaultProperty(nameof({defaultPropField.Name}))]");
         if (!string.IsNullOrEmpty(entity.Icon))
             sb.AppendLine($"[ImageName(\"{entity.Icon}\")]");
         if (!string.IsNullOrEmpty(entity.Caption))

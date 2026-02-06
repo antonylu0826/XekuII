@@ -51,7 +51,7 @@ export function ReferenceSelect({
       onValueChange={(v) => onChange(v === "" ? null : v)}
       disabled={disabled || isLoading}
     >
-      <SelectTrigger>
+      <SelectTrigger className="w-full">
         <SelectValue placeholder={isLoading ? "Loading..." : placeholder} />
       </SelectTrigger>
       <SelectContent>

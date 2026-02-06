@@ -761,8 +761,8 @@ public class ReactPageGenerator
         }
         foreach (var rel in references)
         {
-            var camelRel = ToCamelCase(rel.Name);
-            sb.AppendLine($"{Indent}{Indent}{Indent}{camelRel}Id: ex.{camelRel}?.id ?? ex.{camelRel}?.oid ?? null,");
+            var camelRelId = ToCamelCase(rel.Name) + "Id";
+            sb.AppendLine($"{Indent}{Indent}{Indent}{camelRelId}: ex.{camelRelId} ?? null,");
         }
         sb.AppendLine($"{Indent}{Indent}}}");
         sb.AppendLine($"{Indent}{Indent}: {{");
@@ -869,19 +869,9 @@ public class ReactPageGenerator
         foreach (var detail in details)
         {
             typeImports.Add($"{detail.Target}Summary");
-            typeImports.Add($"Create{detail.Target}ItemDto");
         }
         if (typeImports.Count > 0)
             sb.AppendLine($"import type {{ {string.Join(", ", typeImports)} }} from \"../../types/{kebab}.types.generated\";");
-
-        // Schema imports for detail items
-        if (hasDetails)
-        {
-            var schemaImports = details
-                .Select(d => $"create{d.Target}ItemSchema")
-                .ToList();
-            sb.AppendLine($"import {{ {string.Join(", ", schemaImports)} }} from \"../../schemas/{kebab}.schema.generated\";");
-        }
 
         // Detect which features are used for conditional imports
         var hasBoolFields = entity.Fields.Any(f => f.Type.ToLower() == "bool");
@@ -900,29 +890,14 @@ public class ReactPageGenerator
 
         sb.AppendLine("import { PageLoading } from \"@/components/shared/LoadingSpinner\";");
         sb.AppendLine("import { ConfirmDialog } from \"@/components/shared/ConfirmDialog\";");
-        if (hasDetails)
-            sb.AppendLine("import { EntityForm, type FieldConfig } from \"@/components/shared/EntityForm\";");
-
-        // Check if any detail target has reference relations (for ReferenceSelect import)
-        var detailHasRefs = hasDetails && details.Any(d =>
-        {
-            if (entityMap == null || !entityMap.TryGetValue(d.Target, out var targetEntity)) return false;
-            return targetEntity.Relations.Any(r =>
-                r.Type == "reference" && !string.Equals(r.Target, entityName, StringComparison.OrdinalIgnoreCase));
-        });
-        if (detailHasRefs)
-            sb.AppendLine("import { ReferenceSelect } from \"@/components/shared/ReferenceSelect\";");
 
         sb.AppendLine("import { Button } from \"@/components/ui/button\";");
         sb.AppendLine("import { Card, CardContent, CardHeader, CardTitle } from \"@/components/ui/card\";");
         if (needsBadge)
             sb.AppendLine("import { Badge } from \"@/components/ui/badge\";");
         if (hasDetails)
-        {
-            sb.AppendLine("import { Dialog, DialogContent, DialogHeader, DialogTitle } from \"@/components/ui/dialog\";");
             sb.AppendLine("import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from \"@/components/ui/table\";");
-        }
-        sb.AppendLine($"import {{ Pencil, Trash2, ArrowLeft{(hasDetails ? ", Plus" : "")} }} from \"lucide-react\";");
+        sb.AppendLine("import { Pencil, Trash2, ArrowLeft } from \"lucide-react\";");
         sb.AppendLine("import { toast } from \"sonner\";");
         sb.AppendLine();
 
@@ -932,13 +907,6 @@ public class ReactPageGenerator
         sb.AppendLine($"{Indent}const queryClient = useQueryClient();");
         sb.AppendLine($"{Indent}const {{ id }} = useParams({{ strict: false }}) as {{ id: string }};");
         sb.AppendLine($"{Indent}const [showDelete, setShowDelete] = useState(false);");
-
-        // Detail CRUD state
-        foreach (var detail in details)
-        {
-            sb.AppendLine($"{Indent}const [add{detail.Target}Open, setAdd{detail.Target}Open] = useState(false);");
-            sb.AppendLine($"{Indent}const [delete{detail.Target}Target, setDelete{detail.Target}Target] = useState<string | null>(null);");
-        }
         sb.AppendLine();
 
         // Query
@@ -970,36 +938,6 @@ public class ReactPageGenerator
         sb.AppendLine($"{Indent}}});");
         sb.AppendLine();
 
-        // Detail mutations (add + delete for each detail relation)
-        foreach (var detail in details)
-        {
-            var detailLabel = detail.Label ?? detail.Name;
-
-            // Add mutation
-            sb.AppendLine($"{Indent}const add{detail.Target}Mutation = useMutation({{");
-            sb.AppendLine($"{Indent}{Indent}mutationFn: (data: Create{detail.Target}ItemDto) => {camelName}Api.add{detail.Target}(id, data),");
-            sb.AppendLine($"{Indent}{Indent}onSuccess: () => {{");
-            sb.AppendLine($"{Indent}{Indent}{Indent}queryClient.invalidateQueries({{ queryKey: [\"{camelName}\", id, \"details\"] }});");
-            sb.AppendLine($"{Indent}{Indent}{Indent}setAdd{detail.Target}Open(false);");
-            sb.AppendLine($"{Indent}{Indent}{Indent}toast.success(\"{EscapeString(detailLabel)} added\");");
-            sb.AppendLine($"{Indent}{Indent}}},");
-            sb.AppendLine($"{Indent}{Indent}onError: () => toast.error(\"Failed to add {EscapeString(detailLabel)}\"),");
-            sb.AppendLine($"{Indent}}});");
-            sb.AppendLine();
-
-            // Delete mutation
-            sb.AppendLine($"{Indent}const delete{detail.Target}Mutation = useMutation({{");
-            sb.AppendLine($"{Indent}{Indent}mutationFn: (itemId: string) => {camelName}Api.delete{detail.Target}(id, itemId),");
-            sb.AppendLine($"{Indent}{Indent}onSuccess: () => {{");
-            sb.AppendLine($"{Indent}{Indent}{Indent}queryClient.invalidateQueries({{ queryKey: [\"{camelName}\", id, \"details\"] }});");
-            sb.AppendLine($"{Indent}{Indent}{Indent}setDelete{detail.Target}Target(null);");
-            sb.AppendLine($"{Indent}{Indent}{Indent}toast.success(\"{EscapeString(detailLabel)} deleted\");");
-            sb.AppendLine($"{Indent}{Indent}}},");
-            sb.AppendLine($"{Indent}{Indent}onError: () => toast.error(\"Failed to delete {EscapeString(detailLabel)}\"),");
-            sb.AppendLine($"{Indent}}});");
-            sb.AppendLine();
-        }
-
         sb.AppendLine($"{Indent}if (isLoading || !data) return <PageLoading />;");
         sb.AppendLine();
 
@@ -1007,57 +945,6 @@ public class ReactPageGenerator
         sb.AppendLine($"{Indent}// eslint-disable-next-line @typescript-eslint/no-explicit-any");
         sb.AppendLine($"{Indent}const item = data as any;");
         sb.AppendLine();
-
-        // Detail field configs for add forms
-        foreach (var detail in details)
-        {
-            var targetEntity = entityMap != null && entityMap.TryGetValue(detail.Target, out var te) ? te : null;
-            if (targetEntity == null) continue;
-
-            var writableDetailFields = targetEntity.Fields
-                .Where(f => string.IsNullOrEmpty(f.Formula) && !f.Readonly)
-                .ToList();
-
-            // Get reference relations from target entity (exclude back-reference to parent)
-            var targetRefs = targetEntity.Relations
-                .Where(r => r.Type == "reference" && !string.Equals(r.Target, entityName, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            sb.AppendLine($"{Indent}const {ToCamelCase(detail.Target)}Fields: FieldConfig[] = [");
-            foreach (var f in writableDetailFields)
-            {
-                var camelF = ToCamelCase(f.Name);
-                var fLabel = f.Label ?? f.Name;
-                var fieldType = MapFieldType(f, targetEntity.Enums);
-                sb.AppendLine($"{Indent}{Indent}{{ name: \"{camelF}\", label: \"{EscapeString(fLabel)}\", type: \"{fieldType}\" as const }},");
-            }
-            // Add reference fields with ReferenceSelect
-            foreach (var rel in targetRefs)
-            {
-                var camelRel = ToCamelCase(rel.Name);
-                var label = rel.Label ?? rel.Name;
-                var targetPlural = Pluralize(rel.Target);
-                var endpoint = $"/{ToKebabCase(targetPlural)}";
-                var lookupField = rel.LookupField ?? "name";
-
-                sb.AppendLine($"{Indent}{Indent}{{");
-                sb.AppendLine($"{Indent}{Indent}{Indent}name: \"{camelRel}Id\",");
-                sb.AppendLine($"{Indent}{Indent}{Indent}label: \"{EscapeString(label)}\",");
-                sb.AppendLine($"{Indent}{Indent}{Indent}type: \"custom\" as const,");
-                sb.AppendLine($"{Indent}{Indent}{Indent}render: ({{ value, onChange }}) => (");
-                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}<ReferenceSelect");
-                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}endpoint=\"{endpoint}\"");
-                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}value={{value as string | null}}");
-                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}onChange={{onChange as (v: string | null) => void}}");
-                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}labelField=\"{ToCamelCase(lookupField)}\"");
-                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}placeholder=\"Select {EscapeString(label)}...\"");
-                sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}/>");
-                sb.AppendLine($"{Indent}{Indent}{Indent}),");
-                sb.AppendLine($"{Indent}{Indent}}},");
-            }
-            sb.AppendLine($"{Indent}];");
-            sb.AppendLine();
-        }
 
         // Return JSX
         sb.AppendLine($"{Indent}return (");
@@ -1155,72 +1042,6 @@ public class ReactPageGenerator
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}loading={{deleteMutation.isPending}}");
         sb.AppendLine($"{Indent}{Indent}{Indent}/>");
 
-        // Detail dialogs (Add form dialog + Delete confirm dialog for each detail)
-        foreach (var detail in details)
-        {
-            var targetEntity = entityMap != null && entityMap.TryGetValue(detail.Target, out var te) ? te : null;
-            var detailLabel = detail.Label ?? detail.Name;
-            var camelTarget = ToCamelCase(detail.Target);
-
-            // Add dialog
-            sb.AppendLine();
-            sb.AppendLine($"{Indent}{Indent}{Indent}<Dialog open={{add{detail.Target}Open}} onOpenChange={{setAdd{detail.Target}Open}}>");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}<DialogContent>");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<DialogHeader>");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<DialogTitle>Add {EscapeString(detailLabel)}</DialogTitle>");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</DialogHeader>");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<EntityForm");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}schema={{create{detail.Target}ItemSchema}}");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}fields={{{camelTarget}Fields}}");
-
-            // Build default values for the add form
-            if (targetEntity != null)
-            {
-                var writableDetailFields = targetEntity.Fields
-                    .Where(f => string.IsNullOrEmpty(f.Formula) && !f.Readonly)
-                    .ToList();
-                // Get reference relations (exclude back-reference to parent)
-                var targetRefs = targetEntity.Relations
-                    .Where(r => r.Type == "reference" && !string.Equals(r.Target, entityName, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-                sb.Append($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}defaultValues={{{{ ");
-                var defaults = new List<string>();
-                foreach (var f in writableDetailFields)
-                {
-                    var camelF = ToCamelCase(f.Name);
-                    defaults.Add($"{camelF}: {GetDefaultForType(f, targetEntity.Enums)}");
-                }
-                // Add reference defaults (null)
-                foreach (var rel in targetRefs)
-                {
-                    var camelRel = ToCamelCase(rel.Name);
-                    defaults.Add($"{camelRel}Id: null");
-                }
-                sb.Append(string.Join(", ", defaults));
-                sb.AppendLine(" }}");
-            }
-
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}onSubmit={{(data) => add{detail.Target}Mutation.mutate(data as Create{detail.Target}ItemDto)}}");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}loading={{add{detail.Target}Mutation.isPending}}");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}submitLabel=\"Add\"");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}onCancel={{() => setAdd{detail.Target}Open(false)}}");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}/>");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}</DialogContent>");
-            sb.AppendLine($"{Indent}{Indent}{Indent}</Dialog>");
-
-            // Delete confirm dialog for detail item
-            sb.AppendLine();
-            sb.AppendLine($"{Indent}{Indent}{Indent}<ConfirmDialog");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}open={{!!delete{detail.Target}Target}}");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onOpenChange={{(open) => !open && setDelete{detail.Target}Target(null)}}");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}title=\"Delete {EscapeString(detailLabel)}\"");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}description=\"Are you sure you want to delete this item?\"");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onConfirm={{() => delete{detail.Target}Target && delete{detail.Target}Mutation.mutate(delete{detail.Target}Target)}}");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}loading={{delete{detail.Target}Mutation.isPending}}");
-            sb.AppendLine($"{Indent}{Indent}{Indent}/>");
-        }
-
         sb.AppendLine($"{Indent}{Indent}</div>");
         sb.AppendLine($"{Indent});");
         sb.AppendLine("}");
@@ -1304,17 +1125,14 @@ public class ReactPageGenerator
             .ToList() ?? new List<RelationDefinition>();
 
         sb.AppendLine($"{prefix}<Card>");
-        sb.AppendLine($"{prefix}{Indent}<CardHeader className=\"flex flex-row items-center justify-between\">");
+        sb.AppendLine($"{prefix}{Indent}<CardHeader>");
         sb.AppendLine($"{prefix}{Indent}{Indent}<CardTitle>{EscapeString(section.Title)}</CardTitle>");
-        sb.AppendLine($"{prefix}{Indent}{Indent}<Button size=\"sm\" onClick={{() => setAdd{detail.Target}Open(true)}}>");
-        sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}<Plus className=\"mr-2 h-4 w-4\" /> Add");
-        sb.AppendLine($"{prefix}{Indent}{Indent}</Button>");
         sb.AppendLine($"{prefix}{Indent}</CardHeader>");
         sb.AppendLine($"{prefix}{Indent}<CardContent>");
 
         if (targetFields.Count > 0)
         {
-            var totalCols = targetFields.Count + targetRefs.Count + 1; // +1 for actions
+            var totalCols = targetFields.Count + targetRefs.Count;
             sb.AppendLine($"{prefix}{Indent}{Indent}<Table>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}<TableHeader>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}<TableRow>");
@@ -1328,7 +1146,6 @@ public class ReactPageGenerator
                 var relLabel = rel.Label ?? rel.Name;
                 sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}<TableHead>{EscapeString(relLabel)}</TableHead>");
             }
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}<TableHead className=\"w-[50px]\"></TableHead>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}</TableRow>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}</TableHeader>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}<TableBody>");
@@ -1344,11 +1161,6 @@ public class ReactPageGenerator
                 var camelRel = ToCamelCase(rel.Name);
                 sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<TableCell>{{String(row.{camelRel}Name ?? \"-\")}}</TableCell>");
             }
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<TableCell>");
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8 text-destructive\" onClick={{() => setDelete{detail.Target}Target(row.id ?? (row as any).oid)}}>");
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Trash2 className=\"h-4 w-4\" />");
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</TableCell>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}</TableRow>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent})) ?? (");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}<TableRow><TableCell colSpan={{{totalCols}}} className=\"text-center text-muted-foreground\">No items</TableCell></TableRow>");
@@ -1378,17 +1190,14 @@ public class ReactPageGenerator
             .ToList() ?? new List<RelationDefinition>();
 
         sb.AppendLine($"{prefix}<Card>");
-        sb.AppendLine($"{prefix}{Indent}<CardHeader className=\"flex flex-row items-center justify-between\">");
+        sb.AppendLine($"{prefix}{Indent}<CardHeader>");
         sb.AppendLine($"{prefix}{Indent}{Indent}<CardTitle>{EscapeString(label)}</CardTitle>");
-        sb.AppendLine($"{prefix}{Indent}{Indent}<Button size=\"sm\" onClick={{() => setAdd{detail.Target}Open(true)}}>");
-        sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}<Plus className=\"mr-2 h-4 w-4\" /> Add");
-        sb.AppendLine($"{prefix}{Indent}{Indent}</Button>");
         sb.AppendLine($"{prefix}{Indent}</CardHeader>");
         sb.AppendLine($"{prefix}{Indent}<CardContent>");
 
         if (targetFields.Count > 0)
         {
-            var totalCols = targetFields.Count + targetRefs.Count + 1;
+            var totalCols = targetFields.Count + targetRefs.Count;
             sb.AppendLine($"{prefix}{Indent}{Indent}<Table>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}<TableHeader>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}<TableRow>");
@@ -1402,7 +1211,6 @@ public class ReactPageGenerator
                 var relLabel = rel.Label ?? rel.Name;
                 sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}<TableHead>{EscapeString(relLabel)}</TableHead>");
             }
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}<TableHead className=\"w-[50px]\"></TableHead>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}</TableRow>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}</TableHeader>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}<TableBody>");
@@ -1418,11 +1226,6 @@ public class ReactPageGenerator
                 var camelRel = ToCamelCase(rel.Name);
                 sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<TableCell>{{String(row.{camelRel}Name ?? \"-\")}}</TableCell>");
             }
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<TableCell>");
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8 text-destructive\" onClick={{() => setDelete{detail.Target}Target(row.id ?? (row as any).oid)}}>");
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Trash2 className=\"h-4 w-4\" />");
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
-            sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</TableCell>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}</TableRow>");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent})) ?? (");
             sb.AppendLine($"{prefix}{Indent}{Indent}{Indent}{Indent}{Indent}<TableRow><TableCell colSpan={{{totalCols}}} className=\"text-center text-muted-foreground\">No items</TableCell></TableRow>");
@@ -1480,6 +1283,8 @@ public class ReactPageGenerator
                 "bool" => field.Default.ToLower(),
                 "datetime" when field.Default.Equals("now", StringComparison.OrdinalIgnoreCase)
                     => "new Date().toISOString()",
+                "datetime" when field.Default.Equals("today", StringComparison.OrdinalIgnoreCase)
+                    => "new Date().toISOString().split('T')[0]",
                 "datetime" => $"\"{field.Default}\"",
                 _ => field.Default,
             };
