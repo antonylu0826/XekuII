@@ -267,7 +267,12 @@ XekuII.Generator/
 │   ├── TypeScriptTypeGenerator.cs      # 新增：TS 介面 + 列舉
 │   ├── ZodSchemaGenerator.cs           # 新增：Zod 驗證 schema
 │   ├── ApiClientGenerator.cs           # 新增：Typed API client
-│   └── ReactPageGenerator.cs           # 新增：React CRUD 頁面
+│   ├── ReactPageGenerator.cs           # 新增：React 頁面產生器 (Facade)
+│   │   ├── ReactListPageGenerator.cs    #   列表頁子產生器
+│   │   ├── ReactDetailPageGenerator.cs  #   詳情頁子產生器
+│   │   └── ReactFormPageGenerator.cs    #   表單頁子產生器
+│   └── Reactors/
+│       └── ReactMetadataGenerator.cs    # 新增：路由與導航產生器
 ```
 
 ### 4.2 各生成器職責與輸出

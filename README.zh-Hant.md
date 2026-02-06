@@ -42,7 +42,7 @@ XekuII/
 ├── XekuII.Generator/               # 代碼生成引擎
 │   ├── Models/                     #   EntityDefinition, FieldDefinition 等模型
 │   ├── Parsers/                    #   YamlEntityParser
-│   └── Generators/                 #   CSharpCodeGenerator, ControllerCodeGenerator
+│   └── Generators/                 #   CSharp, Controller, React(Facade), Type, Zod, ApiClient 產生器
 ├── XekuII.ApiHost/                  # ASP.NET Core 後端（XAF + Web API）
 │   ├── BusinessObjects/            #   生成的 XPO 實體 + 手動 partial class
 │   ├── API/                        #   生成的控制器 + Security 控制器

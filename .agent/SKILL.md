@@ -411,7 +411,21 @@ XekuII.CLI generate ./entities ./XekuII.ApiHost/BusinessObjects XekuII.ApiHost.B
 
 ## 4. 生成產物說明
 
-### 4.1 Business Object（`*.Generated.cs`）
+### 4.1 產生器內部架構 (Generator Architecture)
+
+為了保持代碼的可維護性，React 相關產生器採用 **Facade 模式**與**組件化設計**：
+
+- **核心整合器**: `ReactPageGenerator` (Facade) 負責協調並調用子產生器。
+- **專門子產生器**:
+    - `ReactListPageGenerator`: 負責列表頁面 (`*ListPage.generated.tsx`)。
+    - `ReactFormPageGenerator`: 負責表單、即時計算與關聯存檔頁面 (`*FormPage.generated.tsx`)。
+    - `ReactDetailPageGenerator`: 負責詳情頁面 (`*DetailPage.generated.tsx`)。
+    - `ReactMetadataGenerator`: 負責全局路由 (`routes.generated.tsx`) 與導航選單 (`navigation.generated.ts`)。
+- **共用工具**: `Utilities/ReactGeneratorUtils.cs` 封裝了欄位映射、圖示轉換與欄位解析邏輯。
+
+> **提示**: 若需優化特定頁面邏輯，應直接修改對應的子產生器檔案。
+
+### 4.2 Business Object（`*.Generated.cs`）
 
 每個實體生成一個 `partial class`，包含：
 - XPO `BaseObject` 繼承與建構子
