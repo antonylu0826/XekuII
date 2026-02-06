@@ -27,7 +27,7 @@ public class ZodSchemaGenerator
 
         // Create schema
         var writableFields = entity.Fields
-            .Where(f => string.IsNullOrEmpty(f.Formula) && !f.Readonly)
+            .Where(f => !f.Readonly || !string.IsNullOrEmpty(f.Formula))
             .ToList();
 
         var references = entity.Relations.Where(r => r.Type == "reference").ToList();
@@ -67,7 +67,7 @@ public class ZodSchemaGenerator
 
             // Writable fields of target entity, excluding back-reference to parent
             var writableTargetFields = targetEntity.Fields
-                .Where(f => string.IsNullOrEmpty(f.Formula) && !f.Readonly)
+                .Where(f => !f.Readonly || !string.IsNullOrEmpty(f.Formula))
                 .ToList();
 
             // Get reference relations from target entity (exclude back-reference to parent)

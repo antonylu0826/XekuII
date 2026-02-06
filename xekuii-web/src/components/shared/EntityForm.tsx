@@ -19,7 +19,7 @@ export interface FieldConfig {
   label: string;
   type: "text" | "number" | "boolean" | "textarea" | "select" | "date" | "custom";
   placeholder?: string;
-  render?: (field: { value: unknown; onChange: (v: unknown) => void }, methods: { setValue: (name: string, value: unknown) => void }) => ReactNode;
+  render?: (field: { value: unknown; onChange: (v: unknown) => void }, methods: { setValue: (name: string, value: unknown) => void; getValues: (name: string) => unknown }) => ReactNode;
 }
 
 export interface FormRowConfig {
@@ -55,6 +55,9 @@ export function EntityForm({
     defaultValues,
   });
 
+  // Watch for changes to trigger re-renders for custom/calculated fields
+  form.watch();
+
   const fieldMap = new Map(fields.map((f) => [f.name, f]));
 
   function renderField(config: FieldConfig) {
@@ -67,8 +70,11 @@ export function EntityForm({
           <FormItem className="flex-1">
             <FormLabel>{config.label}</FormLabel>
             <FormControl>
-              {config.type === "custom" && config.render ? (
-                <div>{config.render({ value: field.value, onChange: field.onChange }, { setValue: (name, val) => form.setValue(name as Path<FieldValues>, val) })}</div>
+              {config.render ? (
+                <div>{config.render({ value: field.value, onChange: field.onChange }, {
+                  setValue: (name, val) => form.setValue(name as Path<FieldValues>, val, { shouldValidate: true, shouldDirty: true }),
+                  getValues: (name) => form.getValues(name as Path<FieldValues>)
+                })}</div>
               ) : config.type === "boolean" ? (
                 <div className="flex items-center gap-2 pt-1">
                   <Switch

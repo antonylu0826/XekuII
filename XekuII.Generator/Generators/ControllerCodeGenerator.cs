@@ -262,7 +262,7 @@ public class ControllerCodeGenerator
         foreach (var field in writableFields)
         {
             if (field.Type.ToLower() == "datetime")
-                sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name}.GetValueOrDefault(DateTime.Today);");
+                sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name} ?? DateTime.Today;");
             else
                 sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name};");
         }
@@ -303,7 +303,7 @@ public class ControllerCodeGenerator
         foreach (var field in writableFields)
         {
             if (field.Type.ToLower() == "datetime")
-                sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name}.GetValueOrDefault(DateTime.Today);");
+                sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name} ?? DateTime.Today;");
             else
                 sb.AppendLine($"{Indent}{Indent}item.{field.Name} = dto.{field.Name};");
         }

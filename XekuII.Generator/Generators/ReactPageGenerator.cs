@@ -424,6 +424,9 @@ public class ReactPageGenerator
             sb.AppendLine("import { ReferenceSelect } from \"@/components/shared/ReferenceSelect\";");
         sb.AppendLine("import { PageLoading } from \"@/components/shared/LoadingSpinner\";");
         sb.AppendLine("import { toast } from \"sonner\";");
+        sb.AppendLine("import { Input } from \"@/components/ui/input\";");
+        sb.AppendLine("import { Button } from \"@/components/ui/button\";");
+        sb.AppendLine("import { Eye, Pencil, Trash2, Plus, ArrowLeft } from \"lucide-react\";");
         sb.AppendLine();
 
         // Field configs
@@ -530,12 +533,76 @@ public class ReactPageGenerator
 
                 // Detail field configs
                 sb.AppendLine($"const {camelTarget}FieldConfigs: FieldConfig[] = [");
-                foreach (var f in writableDetailFields)
+                foreach (var f in targetEntity.Fields)
                 {
+                    if (f.Readonly && string.IsNullOrEmpty(f.Formula)) continue; // Keep formulas even if readonly
+                    
                     var camelF = ToCamelCase(f.Name);
                     var fLabel = f.Label ?? f.Name;
                     var fieldType = MapFieldType(f, targetEntity.Enums);
-                    sb.AppendLine($"{Indent}{{ name: \"{camelF}\", label: \"{EscapeString(fLabel)}\", type: \"{fieldType}\" as const }},");
+                    
+                    // Check if this field is a formula that we can calculate on frontend (e.g., [Quantity] * [Price])
+                    if (!string.IsNullOrEmpty(f.Formula))
+                    {
+                        sb.AppendLine($"{Indent}{{ ");
+                        sb.AppendLine($"{Indent}{Indent}name: \"{camelF}\", ");
+                        sb.AppendLine($"{Indent}{Indent}label: \"{EscapeString(fLabel)}\", ");
+                        sb.AppendLine($"{Indent}{Indent}type: \"custom\" as const,");
+                        sb.AppendLine($"{Indent}{Indent}render: ({{ value }}) => <div className=\"py-2 px-3 bg-muted rounded-md font-medium text-right\">{{(Number(value) || 0).toLocaleString(undefined, {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }})}}</div>");
+                        sb.AppendLine($"{Indent}}},");
+                        continue;
+                    }
+
+                    // Check if other fields depend on THIS field via formula
+                    var dependentFormulas = targetEntity.Fields
+                        .Where(other => !string.IsNullOrEmpty(other.Formula) && other.Formula.Contains($"[{f.Name}]"))
+                        .ToList();
+
+                    if (dependentFormulas.Any())
+                    {
+                        sb.AppendLine($"{Indent}{{ ");
+                        sb.AppendLine($"{Indent}{Indent}name: \"{camelF}\", ");
+                        sb.AppendLine($"{Indent}{Indent}label: \"{EscapeString(fLabel)}\", ");
+                        sb.AppendLine($"{Indent}{Indent}type: \"{fieldType}\" as const,");
+                        sb.AppendLine($"{Indent}{Indent}render: ({{ value, onChange }}, {{ setValue, getValues }}) => (");
+                        sb.AppendLine($"{Indent}{Indent}{Indent}<Input ");
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}type=\"number\" ");
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}value={{value as number || 0}} ");
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onChange={{(e) => {{");
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}const newVal = e.target.valueAsNumber || 0;");
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}onChange(newVal);");
+                        
+                        // Inject formula sync
+                        foreach (var dep in dependentFormulas)
+                        {
+                            var camelDep = ToCamelCase(dep.Name);
+                            var formula = dep.Formula!; 
+                            if (formula.Contains("*"))
+                            {
+                                var parts = formula.Split('*').Select(p => p.Trim().Trim('[', ']')).ToList();
+                                if (parts.Count == 2)
+                                {
+                                    var otherPart = parts.FirstOrDefault(p => !string.Equals(p, f.Name, StringComparison.OrdinalIgnoreCase));
+                                    if (otherPart != null)
+                                    {
+                                        var camelOther = ToCamelCase(otherPart);
+                                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}const otherVal = Number(getValues(\"{camelOther}\")) || 0;");
+                                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}setValue(\"{camelDep}\", newVal * otherVal, {{ shouldValidate: true, shouldDirty: true }});");
+                                    }
+                                }
+                            }
+                        }
+                        
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}}}}}");
+                        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}placeholder=\"{EscapeString(fLabel)}\"");
+                        sb.AppendLine($"{Indent}{Indent}{Indent}/>");
+                        sb.AppendLine($"{Indent}{Indent}),");
+                        sb.AppendLine($"{Indent}}},");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"{Indent}{{ name: \"{camelF}\", label: \"{EscapeString(fLabel)}\", type: \"{fieldType}\" as const }},");
+                    }
                 }
                 foreach (var rel in targetRefs)
                 {
@@ -556,7 +623,7 @@ public class ReactPageGenerator
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}endpoint=\"{endpoint}\"");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}value={{value as string | null}}");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onChange={{onChange as (v: string | null) => void}}");
-                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onLabelChange={{(label) => setValue(\"{camelRelName}\", label)}}");
+                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onLabelChange={{(label) => setValue(\"{camelRelName}\", label, {{ shouldValidate: true, shouldDirty: true }})}}");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}labelField=\"{ToCamelCase(lookupField)}\"");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}placeholder=\"Select {EscapeString(relLabel)}...\"");
                     sb.AppendLine($"{Indent}{Indent}{Indent}/>");
@@ -585,7 +652,7 @@ public class ReactPageGenerator
 
                 // Detail default values
                 sb.AppendLine($"const {camelTarget}Defaults: Record<string, unknown> = {{");
-                foreach (var f in writableDetailFields)
+                foreach (var f in targetEntity.Fields)
                 {
                     var camelF = ToCamelCase(f.Name);
                     sb.AppendLine($"{Indent}{camelF}: {GetDefaultForType(f, targetEntity.Enums)},");
@@ -594,6 +661,7 @@ public class ReactPageGenerator
                 {
                     var camelRel = ToCamelCase(rel.Name);
                     sb.AppendLine($"{Indent}{camelRel}Id: null,");
+                    sb.AppendLine($"{Indent}{camelRel}Name: null,");
                 }
                 sb.AppendLine("};");
                 sb.AppendLine();
