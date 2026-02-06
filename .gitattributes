@@ -1,0 +1,16 @@
+# 自動偵測文字檔案並根據作業系統轉換換行符號
+* text=auto
+
+# 強制 C# 檔案使用 CRLF (Windows 標準)
+*.cs text eol=crlf
+*.sln text eol=crlf
+*.csproj text eol=crlf
+
+# 強制實體定義與前端配置使用 LF (跨平台標準)
+*.yaml text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.md text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
