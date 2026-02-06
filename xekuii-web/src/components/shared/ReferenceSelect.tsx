@@ -15,6 +15,7 @@ interface ReferenceSelectProps {
   placeholder?: string;
   disabled?: boolean;
   labelField?: string;
+  onLabelChange?: (label: string) => void;
 }
 
 interface RefOption {
@@ -29,6 +30,7 @@ export function ReferenceSelect({
   placeholder = "Select...",
   disabled = false,
   labelField,
+  onLabelChange,
 }: ReferenceSelectProps) {
   const { data: options = [], isLoading } = useQuery({
     queryKey: ["ref", endpoint],
@@ -48,7 +50,17 @@ export function ReferenceSelect({
   return (
     <Select
       value={value ?? ""}
-      onValueChange={(v) => onChange(v === "" ? null : v)}
+      onValueChange={(v) => {
+        onChange(v === "" ? null : v);
+        if (onLabelChange) {
+          const selected = options.find((opt) => opt.oid === v);
+          if (selected) {
+            onLabelChange(getLabel(selected));
+          } else if (v === "") {
+            onLabelChange("");
+          }
+        }
+      }}
       disabled={disabled || isLoading}
     >
       <SelectTrigger className="w-full">

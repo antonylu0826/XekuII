@@ -43,6 +43,7 @@ public class ZodSchemaGenerator
         foreach (var rel in references)
         {
             sb.AppendLine($"{Indent}{ToCamelCase(rel.Name)}Id: z.string().uuid().nullable(),");
+            sb.AppendLine($"{Indent}{ToCamelCase(rel.Name)}Name: z.string().optional().nullable(),");
         }
 
         sb.AppendLine("});");
@@ -85,6 +86,7 @@ public class ZodSchemaGenerator
             {
                 var refSchema = rel.Required ? "z.string().uuid()" : "z.string().uuid().nullable()";
                 sb.AppendLine($"{Indent}{ToCamelCase(rel.Name)}Id: {refSchema},");
+                sb.AppendLine($"{Indent}{ToCamelCase(rel.Name)}Name: z.string().optional().nullable(),");
             }
             sb.AppendLine("});");
             sb.AppendLine();

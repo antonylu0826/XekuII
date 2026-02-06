@@ -19,7 +19,7 @@ export interface FieldConfig {
   label: string;
   type: "text" | "number" | "boolean" | "textarea" | "select" | "date" | "custom";
   placeholder?: string;
-  render?: (field: { value: unknown; onChange: (v: unknown) => void }) => ReactNode;
+  render?: (field: { value: unknown; onChange: (v: unknown) => void }, methods: { setValue: (name: string, value: unknown) => void }) => ReactNode;
 }
 
 export interface FormRowConfig {
@@ -68,7 +68,7 @@ export function EntityForm({
             <FormLabel>{config.label}</FormLabel>
             <FormControl>
               {config.type === "custom" && config.render ? (
-                <div>{config.render({ value: field.value, onChange: field.onChange })}</div>
+                <div>{config.render({ value: field.value, onChange: field.onChange }, { setValue: (name, val) => form.setValue(name as Path<FieldValues>, val) })}</div>
               ) : config.type === "boolean" ? (
                 <div className="flex items-center gap-2 pt-1">
                   <Switch

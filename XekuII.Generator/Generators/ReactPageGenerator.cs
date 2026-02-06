@@ -549,11 +549,14 @@ public class ReactPageGenerator
                     sb.AppendLine($"{Indent}{Indent}name: \"{camelRel}Id\",");
                     sb.AppendLine($"{Indent}{Indent}label: \"{EscapeString(relLabel)}\",");
                     sb.AppendLine($"{Indent}{Indent}type: \"custom\" as const,");
-                    sb.AppendLine($"{Indent}{Indent}render: ({{ value, onChange }}) => (");
+                    var camelRelId = ToCamelCase(rel.Name) + "Id";
+                    var camelRelName = ToCamelCase(rel.Name) + "Name";
+                    sb.AppendLine($"{Indent}{Indent}render: ({{ value, onChange }}, {{ setValue }}) => (");
                     sb.AppendLine($"{Indent}{Indent}{Indent}<ReferenceSelect");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}endpoint=\"{endpoint}\"");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}value={{value as string | null}}");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onChange={{onChange as (v: string | null) => void}}");
+                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onLabelChange={{(label) => setValue(\"{camelRelName}\", label)}}");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}labelField=\"{ToCamelCase(lookupField)}\"");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}placeholder=\"Select {EscapeString(relLabel)}...\"");
                     sb.AppendLine($"{Indent}{Indent}{Indent}/>");
