@@ -1,0 +1,42 @@
+entity: Order
+caption: 訂單
+dbTable: Orders
+fields:
+  - name: OrderNo
+    type: string
+    required: true
+    length: 20
+    label: 訂單單號
+    default: "NEW"
+  - name: OrderDate
+    type: datetime
+    label: 訂單日期
+    default: "today"
+  - name: TotalAmount
+    type: decimal
+    label: 總金額
+    default: "0"
+    readonly: true
+relations:
+  - name: Customer
+    type: reference
+    target: Customer
+    required: true
+    label: 客戶
+    lookupField: Name
+  - name: Items
+    type: detail
+    target: OrderItem
+    label: 訂單明細
+    cascade: delete
+ui:
+  list:
+    columns: [OrderNo, Customer, OrderDate, TotalAmount]
+  detail:
+    sections:
+      - title: 基本資訊
+        fields: [OrderNo, Customer, OrderDate]
+      - title: 金額資訊
+        fields: [TotalAmount]
+      - title: 訂單明細
+        relation: Items
