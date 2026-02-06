@@ -18,6 +18,8 @@ description: 清理 XekuII 專案的生成代碼、暫存檔與建置產物
 
 重新生成前執行此層級即可。
 
+### 後端生成檔案
+
 ```powershell
 # 移除生成的 Business Objects
 Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorAction SilentlyContinue
@@ -26,12 +28,35 @@ Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorA
 Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force -ErrorAction SilentlyContinue
 ```
 
-驗證清除結果：
+### 前端生成檔案
 
 ```powershell
-# 確認無殘留
+# 移除生成的 TypeScript 類型
+Remove-Item -Path "xekuii-web/src/generated/types/*.generated.ts" -Force -ErrorAction SilentlyContinue
+
+# 移除生成的 Zod Schema
+Remove-Item -Path "xekuii-web/src/generated/schemas/*.generated.ts" -Force -ErrorAction SilentlyContinue
+
+# 移除生成的 API Client
+Remove-Item -Path "xekuii-web/src/generated/api/*.generated.ts" -Force -ErrorAction SilentlyContinue
+
+# 移除生成的頁面元件
+Remove-Item -Path "xekuii-web/src/generated/pages" -Recurse -Force -ErrorAction SilentlyContinue
+
+# 移除生成的路由與導航
+Remove-Item -Path "xekuii-web/src/generated/routes.generated.tsx" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/navigation.generated.ts" -Force -ErrorAction SilentlyContinue
+```
+
+### 驗證清除結果
+
+```powershell
+# 確認後端無殘留
 Get-ChildItem -Path "XekuII.ApiHost/BusinessObjects" -Filter "*.Generated.cs"
 Get-ChildItem -Path "XekuII.ApiHost/API" -Filter "*Controller.Generated.cs"
+
+# 確認前端無殘留
+Get-ChildItem -Path "xekuii-web/src/generated" -Recurse -Filter "*.generated.*"
 ```
 
 ---
@@ -95,11 +120,20 @@ Get-ChildItem -Include bin,obj -Recurse -Directory
 ```powershell
 Write-Host "=== XekuII Full Cleanup ===" -ForegroundColor Cyan
 
-# 層級一：生成的代碼
-Write-Host "Removing generated code..." -ForegroundColor Yellow
+# 層級一：後端生成的代碼
+Write-Host "Removing backend generated code..." -ForegroundColor Yellow
 Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force -ErrorAction SilentlyContinue
 Get-ChildItem -Path "XekuII.ApiHost/API" -Include "*Controller.Generated.cs" -Recurse | Remove-Item -Force -ErrorAction SilentlyContinue
+
+# 層級一：前端生成的代碼
+Write-Host "Removing frontend generated code..." -ForegroundColor Yellow
+Remove-Item -Path "xekuii-web/src/generated/types/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/schemas/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/api/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/pages" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/routes.generated.tsx" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/navigation.generated.ts" -Force -ErrorAction SilentlyContinue
 
 # 層級二：實體定義（選用，取消註解以啟用）
 # Write-Host "Removing entity definitions..." -ForegroundColor Yellow
@@ -113,6 +147,11 @@ Remove-Item -Path "OrderSystemTest.ps1","RuntimeTest.ps1","db_update.log","start
 Write-Host "Removing build artifacts..." -ForegroundColor Yellow
 Get-ChildItem -Include bin,obj -Recurse -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
+# 層級四：前端建置產物
+Write-Host "Removing frontend build artifacts..." -ForegroundColor Yellow
+Remove-Item -Path "xekuii-web/node_modules/.vite" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/dist" -Recurse -Force -ErrorAction SilentlyContinue
+
 Write-Host "Cleanup complete." -ForegroundColor Green
 ```
 
@@ -123,16 +162,23 @@ Write-Host "Cleanup complete." -ForegroundColor Green
 清理完成後，典型的接續操作：
 
 ```powershell
-# 重新生成（若有 YAML 定義）
+# 重新生成（後端 + 前端）
 dotnet run --project XekuII.Generator -- ./entities `
   --output ./XekuII.ApiHost/BusinessObjects `
-  --controllers ./XekuII.ApiHost/API
+  --controllers ./XekuII.ApiHost/API `
+  --frontend ./xekuii-web/src/generated
 
-# 還原套件（若清除了 bin/obj）
+# 還原後端套件（若清除了 bin/obj）
 dotnet restore
 
-# 建置
+# 建置後端
 dotnet build
+
+# 還原前端套件（若清除了 node_modules）
+cd xekuii-web && npm install && cd ..
+
+# 建置前端
+cd xekuii-web && npm run build && cd ..
 
 # 更新資料庫
 dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj `

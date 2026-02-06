@@ -17,27 +17,47 @@
 dotnet run --project XekuII.Generator -- ./entities --output ./XekuII.ApiHost/BusinessObjects --controllers ./XekuII.ApiHost/API
 ```
 
-### 2. 建置與執行 (Build & Run)
-啟動後端 API 伺服器：
+### 2. 服務管理 (Service Management)
+使用 XekuII CLI 管理前後端服務：
+```powershell
+# 啟動所有服務
+dotnet run --project XekuII.CLI -- start
+
+# 僅啟動後端
+dotnet run --project XekuII.CLI -- start --backend
+
+# 僅啟動前端
+dotnet run --project XekuII.CLI -- start --frontend
+
+# 停止服務
+dotnet run --project XekuII.CLI -- stop
+
+# 查詢服務狀態
+dotnet run --project XekuII.CLI -- status
+```
+- Backend API: http://localhost:5000 (Swagger: /swagger)
+- Frontend Web: http://localhost:5173
+
+### 3. 手動啟動 (Manual Start)
+若不使用 CLI，可手動啟動後端：
 ```powershell
 dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj
 ```
-- API Swagger: http://localhost:5000/swagger
 
-### 3. 資料庫更新 (Database Update)
+### 4. 資料庫更新 (Database Update)
 當實體結構變更時，執行此指令更新資料庫 Schema：
 ```powershell
 dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj -- --updateDatabase --forceUpdate --silent
 ```
 
-### 4. 測試 (Testing)
+### 5. 測試 (Testing)
 - **單元/整合測試**: (尚無專用專案，目前使用 PowerShell 腳本)
 - **Runtime 驗證**: 執行 `RuntimeTest.ps1` 進行端對端 API 測試。
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\RuntimeTest.ps1
 ```
 
-### 5. 清理專案 (Cleanup)
+### 6. 清理專案 (Cleanup)
 移除所有生成代碼與暫存檔 (需搭配技能使用):
 - 刪除 `entities/*.xeku.yaml`
 - 刪除 `XekuII.ApiHost/BusinessObjects/*.Generated.cs`

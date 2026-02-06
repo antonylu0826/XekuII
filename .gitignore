@@ -24,3 +24,6 @@
 .DS_Store
 node_modules/
 dist/
+
+## [XekuII CLI State]
+.xekuii/

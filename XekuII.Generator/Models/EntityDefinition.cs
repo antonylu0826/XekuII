@@ -24,6 +24,16 @@ public class EntityDefinition
     /// Enum definitions scoped to this entity.
     /// </summary>
     public List<EnumDefinition> Enums { get; set; } = new();
+
+    /// <summary>
+    /// UI configuration for frontend code generation.
+    /// </summary>
+    public UiDefinition? Ui { get; set; }
+
+    /// <summary>
+    /// Permission configuration for frontend/backend access control.
+    /// </summary>
+    public PermissionsDefinition? Permissions { get; set; }
 }
 
 /// <summary>

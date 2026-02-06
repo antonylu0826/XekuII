@@ -28,6 +28,14 @@ Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorA
 
 # 清除生成的 API 控制器
 Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force -ErrorAction SilentlyContinue
+
+# 清除生成的前端檔案（若使用 --frontend）
+Remove-Item -Path "xekuii-web/src/generated/types/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/schemas/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/api/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/pages" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/routes.generated.tsx" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/navigation.generated.ts" -Force -ErrorAction SilentlyContinue
 ```
 
 ---
@@ -42,7 +50,13 @@ dotnet run --project XekuII.Generator -- ./entities `
   --output ./XekuII.ApiHost/BusinessObjects `
   --controllers ./XekuII.ApiHost/API
 
-# 僅生成 BO（不含 Controller）
+# 完整生成：BO + API Controller + 前端
+dotnet run --project XekuII.Generator -- ./entities `
+  --output ./XekuII.ApiHost/BusinessObjects `
+  --controllers ./XekuII.ApiHost/API `
+  --frontend ./xekuii-web/src/generated
+
+# 僅生成 BO（不含 Controller 或前端）
 dotnet run --project XekuII.Generator -- ./entities `
   --output ./XekuII.ApiHost/BusinessObjects
 
@@ -72,20 +86,36 @@ XekuII.CLI generate ./entities ./XekuII.ApiHost/BusinessObjects XekuII.ApiHost.B
 | 第一個位置參數 | 實體 YAML 目錄 | （必填） |
 | `--output` | BO 輸出目錄 | `../XekuII.ApiHost/BusinessObjects` |
 | `--controllers` | Controller 輸出目錄（省略則不生成） | （無） |
+| `--frontend` | 前端 generated 輸出目錄（省略則不生成） | （無） |
 | `--namespace` | 目標命名空間 | `XekuII.ApiHost.BusinessObjects` |
 
 ### 預期輸出
 
 ```
+🚀 Running XekuII Generator
+=================
+📂 Entities:     ./entities
+📁 BO Output:   ./XekuII.ApiHost/BusinessObjects
+📁 Controllers: ./XekuII.ApiHost/API
+🌐 Frontend:    ./xekuii-web/src/generated
+📦 Namespace:   XekuII.ApiHost.BusinessObjects
+
 🔍 Scanning entities from: ./entities
 📁 Output directory: ./XekuII.ApiHost/BusinessObjects
+🌐 Frontend output: ./xekuii-web/src/generated
 
 ✅Generated BO: Product.Generated.cs
 ✅Generated API: ProductsController.Generated.cs
-✅Generated BO: ProductCategory.Generated.cs
-✅Generated API: ProductCategoriesController.Generated.cs
+  🌐 types/product.types.generated.ts
+  🌐 schemas/product.schema.generated.ts
+  🌐 api/product.api.generated.ts
+  🌐 pages/product/ProductListPage.generated.tsx
+  🌐 pages/product/ProductFormPage.generated.tsx
+  🌐 pages/product/ProductDetailPage.generated.tsx
+✅Generated: routes.generated.tsx
+✅Generated: navigation.generated.ts
 
-📊 Total: 2 entities generated.
+📊 Total: 1 entities generated.
 ```
 
 ---
@@ -99,8 +129,14 @@ Get-ChildItem -Path "XekuII.ApiHost/BusinessObjects" -Filter "*.Generated.cs"
 # 檢查生成的 Controller 檔案
 Get-ChildItem -Path "XekuII.ApiHost/API" -Filter "*Controller.Generated.cs"
 
-# 建置專案確認無編譯錯誤
+# 檢查生成的前端檔案（若使用 --frontend）
+Get-ChildItem -Path "xekuii-web/src/generated" -Recurse -Filter "*.generated.*"
+
+# 建置後端確認無編譯錯誤
 dotnet build XekuII.ApiHost/XekuII.ApiHost.csproj
+
+# 建置前端確認無型別錯誤（若使用 --frontend）
+cd xekuii-web && npm run build && cd ..
 ```
 
 ---
@@ -145,6 +181,8 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/products" -Headers $headers
 
 將以上步驟合併為單一指令序列：
 
+### 後端 only
+
 ```powershell
 # 清除 → 生成 → 建置 → 更新資料庫
 Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorAction SilentlyContinue
@@ -156,6 +194,36 @@ dotnet run --project XekuII.Generator -- ./entities `
 
 dotnet build XekuII.ApiHost/XekuII.ApiHost.csproj
 
+dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj `
+  -- --updateDatabase --forceUpdate --silent
+```
+
+### 全端（後端 + 前端）
+
+```powershell
+# 清除後端
+Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force -ErrorAction SilentlyContinue
+
+# 清除前端
+Remove-Item -Path "xekuii-web/src/generated/types/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/schemas/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/api/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/pages" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/routes.generated.tsx" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/navigation.generated.ts" -Force -ErrorAction SilentlyContinue
+
+# 生成全部
+dotnet run --project XekuII.Generator -- ./entities `
+  --output ./XekuII.ApiHost/BusinessObjects `
+  --controllers ./XekuII.ApiHost/API `
+  --frontend ./xekuii-web/src/generated
+
+# 建置驗證
+dotnet build XekuII.ApiHost/XekuII.ApiHost.csproj
+cd xekuii-web && npm run build && cd ..
+
+# 更新資料庫
 dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj `
   -- --updateDatabase --forceUpdate --silent
 ```

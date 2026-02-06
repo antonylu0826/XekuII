@@ -111,22 +111,66 @@ enums:
 rules:
   - trigger: BeforeSave
     script: ValidateOrder
+
+ui:
+  list:
+    columns: [OrderNumber, OrderDate, Customer, Status, TotalAmount]
+    defaultSort: OrderDate
+    defaultSortDir: desc
+    searchable: [OrderNumber]
+    filterable: [Status]
+    pageSize: 25
+  form:
+    layout:
+      - row: [OrderNumber, OrderDate]
+      - row: [Customer, Status]
+      - row: [IsUrgent]
+      - row: [Note]
+  detail:
+    sections:
+      - title: 基本資訊
+        fields: [OrderNumber, OrderDate, Customer, Status, IsUrgent]
+      - title: 金額
+        fields: [TotalAmount]
+      - title: 訂單明細
+        relation: Items
+      - title: 備註
+        fields: [Note]
+
+permissions:
+  read: Default
+  create: Default
+  update: Default
+  delete: Administrators
 ```
 
-### 2.2 欄位型別映射
+### 2.2 UI 區塊說明
 
-| YAML 型別 | C# 型別 | TypeScript 型別 | 說明 |
-|-----------|---------|----------------|------|
-| `string` | `string` | `string` | 字串，可用 `length` 設定最大長度 |
-| `int` | `int` | `number` | 整數 |
-| `decimal` | `decimal` | `number` | 高精度數值（金額等） |
-| `double` | `double` | `number` | 浮點數 |
-| `bool` | `bool` | `boolean` | 布林值 |
-| `datetime` | `DateTime` | `string` (ISO) | 日期時間 |
-| `guid` | `Guid` | `string` | 全域唯一識別碼 |
-| `{EnumName}` | `{EnumName}` | `enum` | 實體範圍列舉 |
+`ui` 區塊控制前端頁面的生成行為：
 
-### 2.3 驗證規則語法
+| 區塊 | 說明 |
+|------|------|
+| `ui.list` | 列表頁：顯示欄位、排序、搜尋、篩選、每頁筆數 |
+| `ui.form` | 表單頁：layout 定義每列包含哪些欄位 |
+| `ui.detail` | 詳情頁：sections 定義分區，可包含欄位或關聯（relation） |
+| `permissions` | CRUD 各動作所需角色（`read`、`create`、`update`、`delete`） |
+
+> 若未定義 `ui` 區塊，Generator 會以合理預設值自動推斷（所有非計算欄位顯示於列表、一列一欄位的表單、單一分區的詳情頁）。
+
+### 2.3 欄位型別映射
+
+| YAML 型別 | C# 型別 | TypeScript 型別 | Zod 型別 | 說明 |
+|-----------|---------|----------------|----------|------|
+| `string` | `string` | `string` | `z.string()` | 字串，可用 `length` 設定最大長度 |
+| `int` | `int` | `number` | `z.number().int()` | 整數 |
+| `decimal` | `decimal` | `number` | `z.number()` | 高精度數值（金額等） |
+| `double` | `double` | `number` | `z.number()` | 浮點數 |
+| `bool` | `bool` | `boolean` | `z.boolean()` | 布林值 |
+| `datetime` | `DateTime` | `string` (ISO) | `z.string()` | 日期時間 |
+| `guid` | `Guid` | `string` | `z.string().uuid()` | 全域唯一識別碼 |
+| `{EnumName}` | `{EnumName}` | `enum` | `z.number().int()` | 實體範圍列舉 |
+
+### 2.4 驗證規則語法
 
 ```yaml
 validations:
@@ -152,7 +196,7 @@ validations:
     message: "金額不可為負數"
 ```
 
-### 2.4 預設值語法
+### 2.5 預設值語法
 
 | 型別 | YAML 值 | 生成的 C# |
 |------|---------|-----------|
@@ -167,7 +211,7 @@ validations:
 | `guid` | `"empty"` | `Guid.Empty` |
 | `{Enum}` | `"Draft"` | `{EnumName}.Draft` |
 
-### 2.5 計算欄位
+### 2.6 計算欄位
 
 **PersistentAlias**（XPO Criteria 語法，可參與資料庫查詢）：
 ```yaml
@@ -185,7 +229,7 @@ validations:
   calculationType: getter
 ```
 
-### 2.6 關聯類型
+### 2.7 關聯類型
 
 **Reference（多對一）** — 產生外鍵屬性 + `[Association]`：
 ```yaml
@@ -206,7 +250,7 @@ relations:
     cascade: delete          # 級聯刪除
 ```
 
-### 2.7 自動反向關聯
+### 2.8 自動反向關聯
 
 Generator 會自動分析所有實體之間的關係：
 
@@ -214,6 +258,30 @@ Generator 會自動分析所有實體之間的關係：
 - **單向關係**：若只有一端定義關聯，Generator 自動在另一端生成反向屬性
   - `reference → TargetEntity` → 在 Target 生成 `XPCollection<SourceEntity>`
   - `detail → TargetEntity` → 在 Target 生成 `SourceEntity` reference 屬性
+
+### 2.9 Detail 子實體的 Reference 關聯
+
+Detail 子實體（如 `OrderLine`）可以擁有自己的 reference 關聯（如參照 `Product`）：
+
+```yaml
+# OrderLine.xeku.yaml
+entity: OrderLine
+relations:
+  - name: Product
+    type: reference
+    target: Product
+    required: true
+    label: 產品
+    lookupField: Name
+```
+
+Generator 會自動處理：
+
+1. **後端 API**：`OrderAddOrderLineRequest` 包含 `ProductId` 欄位
+2. **前端表單**：Detail item 新增對話框顯示 `ReferenceSelect` 下拉選單
+3. **導航排除**：Detail 子實體（如 OrderLine）不會出現在側邊導航選單，只能從父實體詳情頁存取
+
+> **重要**：Detail 子實體的 reference 會自動排除對父實體的反向參照。例如 OrderLine 的 Product reference 會包含在表單中，但 Order reference 不會（由系統自動設定）。
 
 ---
 
@@ -227,7 +295,13 @@ dotnet run --project XekuII.Generator -- ./entities `
   --output ./XekuII.ApiHost/BusinessObjects `
   --controllers ./XekuII.ApiHost/API
 
-# 僅生成 BO（不含 Controller）
+# 完整生成（BO + API Controller + 前端）
+dotnet run --project XekuII.Generator -- ./entities `
+  --output ./XekuII.ApiHost/BusinessObjects `
+  --controllers ./XekuII.ApiHost/API `
+  --frontend ./xekuii-web/src/generated
+
+# 僅生成 BO（不含 Controller 或前端）
 dotnet run --project XekuII.Generator -- ./entities `
   --output ./XekuII.ApiHost/BusinessObjects
 ```
@@ -236,6 +310,7 @@ dotnet run --project XekuII.Generator -- ./entities `
 - 第一個位置參數：實體 YAML 目錄路徑
 - `--output`：BO 輸出目錄
 - `--controllers`：Controller 輸出目錄（省略則不生成）
+- `--frontend`：前端 generated 輸出目錄（省略則不生成，指向 `xekuii-web/src/generated`）
 - `--namespace`：目標命名空間（預設 `XekuII.ApiHost.BusinessObjects`）
 
 ### 3.2 資料庫更新
@@ -245,29 +320,84 @@ dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj `
   -- --updateDatabase --forceUpdate --silent
 ```
 
-### 3.3 啟動應用程式
+### 3.3 服務管理（XekuII CLI）
+
+使用 CLI 統一管理前後端服務，類似 .NET Aspire 的服務編排：
 
 ```powershell
-dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj
+# 啟動所有服務
+dotnet run --project XekuII.CLI -- start
+
+# 僅啟動後端 API
+dotnet run --project XekuII.CLI -- start --backend
+dotnet run --project XekuII.CLI -- start -b
+
+# 僅啟動前端 Web
+dotnet run --project XekuII.CLI -- start --frontend
+dotnet run --project XekuII.CLI -- start -f
+
+# 停止所有服務
+dotnet run --project XekuII.CLI -- stop
+
+# 停止指定服務
+dotnet run --project XekuII.CLI -- stop --backend
+dotnet run --project XekuII.CLI -- stop --frontend
+
+# 查詢服務狀態
+dotnet run --project XekuII.CLI -- status
 ```
 
-- API 基礎位址：`http://localhost:5000`
-- Swagger UI：`http://localhost:5000/swagger`
+**服務端點：**
+| 服務 | 端口 | URL |
+|------|------|-----|
+| Backend API | 5000 | http://localhost:5000 |
+| Swagger UI | 5000 | http://localhost:5000/swagger |
+| Frontend Web | 5173 | http://localhost:5173 |
 
-### 3.4 清除生成檔案
+**狀態說明：**
+| 狀態 | 意義 |
+|------|------|
+| Stopped | 服務未運行 |
+| Starting | 服務啟動中 |
+| Running | 服務正常運行 |
+| Unhealthy | 進程存在但健康檢查失敗 |
+| Error | 啟動失敗或異常終止 |
+
+### 3.4 手動啟動（無 CLI）
+
+若不使用 CLI，可手動分別啟動：
 
 ```powershell
-# 清除 BO
+# 後端
+dotnet run --project XekuII.ApiHost/XekuII.ApiHost.csproj
+
+# 前端（另一個終端）
+cd xekuii-web
+npm run dev
+```
+
+### 3.5 清除生成檔案
+
+```powershell
+# 清除後端 BO
 Remove-Item -Path "XekuII.ApiHost/BusinessObjects/*.Generated.cs" -Force -ErrorAction SilentlyContinue
 
-# 清除 Controller
+# 清除後端 Controller
 Remove-Item -Path "XekuII.ApiHost/API/*Controller.Generated.cs" -Force -ErrorAction SilentlyContinue
 
-# 清除建置產物
+# 清除前端生成檔案
+Remove-Item -Path "xekuii-web/src/generated/types/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/schemas/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/api/*.generated.ts" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/pages" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/routes.generated.tsx" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "xekuii-web/src/generated/navigation.generated.ts" -Force -ErrorAction SilentlyContinue
+
+# 清除 .NET 建置產物
 Get-ChildItem -Include bin,obj -Recurse | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-### 3.5 XekuII CLI
+### 3.6 XekuII CLI（代碼生成）
 
 ```powershell
 # 使用 CLI 生成
@@ -325,6 +455,32 @@ XekuII.CLI generate ./entities ./XekuII.ApiHost/BusinessObjects XekuII.ApiHost.B
 - `{Entity}{DetailTarget}ItemDto` — Detail 項目摘要
 - `{Entity}Add{DetailTarget}Request` — 新增明細請求
 - `{Entity}Update{DetailTarget}Request` — 更新明細請求
+
+### 4.3 前端生成產物
+
+使用 `--frontend` 參數時，每個實體會生成以下前端檔案（放置於指定的前端 generated 目錄）：
+
+| 檔案 | 目錄 | 說明 |
+|------|------|------|
+| `{kebab}.types.generated.ts` | `types/` | TypeScript 介面：主介面、Ref DTO、Details 介面、Create/Update DTO、列舉 + Labels |
+| `{kebab}.schema.generated.ts` | `schemas/` | Zod 驗證 schema：create schema（含驗證鏈）、update schema（partial）、推斷型別 |
+| `{kebab}.api.generated.ts` | `api/` | 型別安全 API 客戶端：getAll、getById、getDetails、create、update、delete + detail 端點 |
+| `{Entity}ListPage.generated.tsx` | `pages/{kebab}/` | 列表頁：TanStack Table、搜尋、排序、刪除確認、行操作按鈕（View/Edit/Delete） |
+| `{Entity}FormPage.generated.tsx` | `pages/{kebab}/` | 表單頁：React Hook Form + Zod 驗證、建立/編輯雙模式、ReferenceSelect |
+| `{Entity}DetailPage.generated.tsx` | `pages/{kebab}/` | 詳情頁：欄位顯示、分區佈局、Detail 關聯表格（含 reference 選擇）、編輯/刪除操作 |
+
+另外生成跨實體的共用檔案：
+
+| 檔案 | 說明 |
+|------|------|
+| `routes.generated.tsx` | 路由定義：列表、新增、詳情、編輯路由（含 detail 子實體） |
+| `navigation.generated.ts` | 導航選單項目：label、path、icon（自動排除 detail 子實體） |
+
+**導航選單排除規則**：
+
+被其他實體透過 `type: detail` 關聯的子實體（如 `OrderLine`）不會出現在側邊導航選單。這些實體的頁面仍存在（透過 URL 可直接存取），但使用者應從父實體的詳情頁管理這些子項目。
+
+> **注意**：`*.generated.*` 檔案由 Generator 完全管理，嚴禁手動修改。前端客製化應在 `xekuii-web/src/components/` 或 `xekuii-web/src/pages/` 中實作。
 
 ---
 
@@ -407,11 +563,15 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/customers" -Headers $headers
 
 ```
 1. 建立/修改 entities/*.xeku.yaml
-2. 清除舊的 Generated 檔案（避免殘留）
-3. 執行 Generator（BO + Controller）
+2. 清除舊的 Generated 檔案（後端 + 前端，避免殘留）
+3. 執行 Generator（BO + Controller + Frontend）
 4. 更新資料庫（若結構有變）
-5. 啟動應用程式並驗證
-6. 如需客製化，建立 partial class 擴展
+5. 建置後端驗證編譯
+6. 建置前端驗證編譯（npm run build）
+7. 啟動應用程式並驗證
+8. 如需客製化：
+   - 後端：建立 partial class 擴展
+   - 前端：在 src/components/ 或 src/pages/ 中實作
 ```
 
 **詳細步驟請參考 `.agent/workflows/` 目錄下的工作流程文件。**

@@ -12,7 +12,10 @@ public class XekuGenerator
     private readonly YamlEntityParser _parser;
     private readonly CSharpCodeGenerator _codeGenerator;
     private readonly ControllerCodeGenerator _controllerGenerator;
-
+    private readonly TypeScriptTypeGenerator _tsTypeGenerator;
+    private readonly ZodSchemaGenerator _zodSchemaGenerator;
+    private readonly ApiClientGenerator _apiClientGenerator;
+    private readonly ReactPageGenerator _reactPageGenerator;
 
     private readonly string _outputDirectory;
 
@@ -21,7 +24,10 @@ public class XekuGenerator
         _parser = new YamlEntityParser();
         _codeGenerator = new CSharpCodeGenerator();
         _controllerGenerator = new ControllerCodeGenerator();
-
+        _tsTypeGenerator = new TypeScriptTypeGenerator();
+        _zodSchemaGenerator = new ZodSchemaGenerator();
+        _apiClientGenerator = new ApiClientGenerator();
+        _reactPageGenerator = new ReactPageGenerator();
 
         _outputDirectory = outputDirectory;
     }
@@ -33,16 +39,23 @@ public class XekuGenerator
         string entitiesDirectory,
         string targetNamespace = "XekuII.Generated",
         bool generateControllers = false,
-        string? controllersOutputDir = null)
+        string? controllersOutputDir = null,
+        bool generateFrontend = false,
+        string? frontendOutputDir = null)
     {
-        Console.WriteLine($"?? Scanning entities from: {entitiesDirectory}");
-        Console.WriteLine($"?? Output directory: {_outputDirectory}");
+        Console.WriteLine($"🔍 Scanning entities from: {entitiesDirectory}");
+        Console.WriteLine($"📁 Output directory: {_outputDirectory}");
+        if (generateFrontend && frontendOutputDir != null)
+            Console.WriteLine($"🌐 Frontend output: {frontendOutputDir}");
         Console.WriteLine();
 
         Directory.CreateDirectory(_outputDirectory);
 
         // Parse all entities first
         var entities = _parser.ParseDirectory(entitiesDirectory).ToList();
+
+        // Build entity map for cross-entity lookups (detail relations need target entity fields)
+        var entityMap = entities.ToDictionary(e => e.Entity, StringComparer.OrdinalIgnoreCase);
 
         // Analyze reverse associations
         var (reverseAssociations, associationOverrides) = AnalyzeRelationships(entities);
@@ -60,23 +73,95 @@ public class XekuGenerator
             var outputPath = Path.Combine(_outputDirectory, $"{entity.Entity}.Generated.cs");
 
             File.WriteAllText(outputPath, code);
-            Console.WriteLine($"??Generated BO: {entity.Entity}.Generated.cs");
+            Console.WriteLine($"✅Generated BO: {entity.Entity}.Generated.cs");
 
             // Generate controller if requested
             if (generateControllers && controllersOutputDir != null)
             {
                 Directory.CreateDirectory(controllersOutputDir);
-                var controllerCode = _controllerGenerator.Generate(entity, targetNamespace);
+                var controllerCode = _controllerGenerator.Generate(entity, targetNamespace, entityMap: entityMap);
                 var controllerPath = Path.Combine(controllersOutputDir, $"{Pluralize(entity.Entity)}Controller.Generated.cs");
                 File.WriteAllText(controllerPath, controllerCode);
-                Console.WriteLine($"??Generated API: {Pluralize(entity.Entity)}Controller.Generated.cs");
+                Console.WriteLine($"✅Generated API: {Pluralize(entity.Entity)}Controller.Generated.cs");
+            }
+
+            // Generate frontend code if requested
+            if (generateFrontend && frontendOutputDir != null)
+            {
+                GenerateFrontendForEntity(entity, frontendOutputDir, entityMap);
             }
 
             count++;
         }
 
+        // Generate cross-entity frontend files (routes, navigation)
+        if (generateFrontend && frontendOutputDir != null && entities.Count > 0)
+        {
+            var routesCode = _reactPageGenerator.GenerateRoutes(entities);
+            File.WriteAllText(Path.Combine(frontendOutputDir, "routes.generated.tsx"), routesCode);
+            Console.WriteLine("✅Generated: routes.generated.tsx");
+
+            var navCode = _reactPageGenerator.GenerateNavigation(entities);
+            File.WriteAllText(Path.Combine(frontendOutputDir, "navigation.generated.ts"), navCode);
+            Console.WriteLine("✅Generated: navigation.generated.ts");
+        }
+
         Console.WriteLine();
-        Console.WriteLine($"?? Total: {count} entities generated.");
+        Console.WriteLine($"📊 Total: {count} entities generated.");
+    }
+
+    private void GenerateFrontendForEntity(EntityDefinition entity, string frontendOutputDir, Dictionary<string, EntityDefinition> entityMap)
+    {
+        var kebabName = ToKebabCase(entity.Entity);
+
+        // Types
+        var typesDir = Path.Combine(frontendOutputDir, "types");
+        Directory.CreateDirectory(typesDir);
+        var tsCode = _tsTypeGenerator.Generate(entity, entityMap);
+        File.WriteAllText(Path.Combine(typesDir, $"{kebabName}.types.generated.ts"), tsCode);
+        Console.WriteLine($"  🌐 types/{kebabName}.types.generated.ts");
+
+        // Schemas
+        var schemasDir = Path.Combine(frontendOutputDir, "schemas");
+        Directory.CreateDirectory(schemasDir);
+        var zodCode = _zodSchemaGenerator.Generate(entity, entityMap);
+        File.WriteAllText(Path.Combine(schemasDir, $"{kebabName}.schema.generated.ts"), zodCode);
+        Console.WriteLine($"  🌐 schemas/{kebabName}.schema.generated.ts");
+
+        // API client
+        var apiDir = Path.Combine(frontendOutputDir, "api");
+        Directory.CreateDirectory(apiDir);
+        var apiCode = _apiClientGenerator.Generate(entity, entityMap);
+        File.WriteAllText(Path.Combine(apiDir, $"{kebabName}.api.generated.ts"), apiCode);
+        Console.WriteLine($"  🌐 api/{kebabName}.api.generated.ts");
+
+        // Pages
+        var pagesDir = Path.Combine(frontendOutputDir, "pages", kebabName);
+        Directory.CreateDirectory(pagesDir);
+
+        var listCode = _reactPageGenerator.GenerateListPage(entity);
+        File.WriteAllText(Path.Combine(pagesDir, $"{entity.Entity}ListPage.generated.tsx"), listCode);
+        Console.WriteLine($"  🌐 pages/{kebabName}/{entity.Entity}ListPage.generated.tsx");
+
+        var formCode = _reactPageGenerator.GenerateFormPage(entity);
+        File.WriteAllText(Path.Combine(pagesDir, $"{entity.Entity}FormPage.generated.tsx"), formCode);
+        Console.WriteLine($"  🌐 pages/{kebabName}/{entity.Entity}FormPage.generated.tsx");
+
+        var detailCode = _reactPageGenerator.GenerateDetailPage(entity, entityMap);
+        File.WriteAllText(Path.Combine(pagesDir, $"{entity.Entity}DetailPage.generated.tsx"), detailCode);
+        Console.WriteLine($"  🌐 pages/{kebabName}/{entity.Entity}DetailPage.generated.tsx");
+    }
+
+    private static string ToKebabCase(string name)
+    {
+        var result = new System.Text.StringBuilder();
+        for (int i = 0; i < name.Length; i++)
+        {
+            if (char.IsUpper(name[i]) && i > 0)
+                result.Append('-');
+            result.Append(char.ToLower(name[i]));
+        }
+        return result.ToString();
     }
 
     private string Pluralize(string name)

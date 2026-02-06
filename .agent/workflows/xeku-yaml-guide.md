@@ -7,7 +7,7 @@ globs: entities/**/*.xeku.yaml
 
 ## 概要
 
-在 `entities/` 目錄下建立 `.xeku.yaml` 檔案來定義業務實體。Generator 會讀取這些檔案，自動生成 C# XPO 業務物件與 REST API 控制器。
+在 `entities/` 目錄下建立 `.xeku.yaml` 檔案來定義業務實體。Generator 會讀取這些檔案，自動生成 C# XPO 業務物件、REST API 控制器，以及 React 前端頁面（TypeScript 型別、Zod Schema、API Client、List/Form/Detail 頁面）。
 
 ---
 
@@ -132,7 +132,94 @@ enums:
 rules:
   - trigger: BeforeSave
     script: ValidateProduct
+
+# 前端 UI 配置（選用，省略則使用預設推斷）
+ui:
+  list:
+    columns: [Code, Name, Category, Price, Quantity, Status]
+    defaultSort: Name
+    defaultSortDir: asc
+    searchable: [Code, Name]
+    filterable: [Status, Category]
+    pageSize: 25
+  form:
+    layout:
+      - row: [Code, Name]
+      - row: [Category, Status]
+      - row: [Price, Quantity]
+      - row: [IsActive]
+  detail:
+    sections:
+      - title: 基本資訊
+        fields: [Code, Name, Category, Status, IsActive]
+      - title: 定價與庫存
+        fields: [Price, Quantity, TotalValue]
+      - title: 價格歷程
+        relation: PriceHistory
+
+# 權限配置（選用，省略則使用預設值）
+permissions:
+  read: Default
+  create: Default
+  update: Default
+  delete: Administrators
 ```
+
+---
+
+## UI 配置速查表
+
+### ui.list（列表頁）
+
+```yaml
+ui:
+  list:
+    columns: [Field1, Field2, Ref1]     # 顯示哪些欄位，省略則全部非計算欄位
+    defaultSort: Field1                   # 預設排序欄位
+    defaultSortDir: desc                  # asc 或 desc
+    searchable: [Field1, Field2]          # 可搜尋的欄位，省略則取前兩個字串欄位
+    filterable: [Status]                  # 可篩選的欄位
+    pageSize: 25                          # 每頁筆數，預設 20
+```
+
+### ui.form（表單頁）
+
+```yaml
+ui:
+  form:
+    layout:
+      - row: [Field1, Field2]            # 同一列放多個欄位
+      - row: [Field3]                     # 單獨一列
+      - row: [RefField]                   # Reference 欄位自動用 ReferenceSelect
+```
+
+> 省略 `layout` 則每個欄位獨立一列。
+
+### ui.detail（詳情頁）
+
+```yaml
+ui:
+  detail:
+    sections:
+      - title: 區段標題
+        fields: [Field1, Field2, Ref1]   # 顯示欄位
+      - title: 明細項目
+        relation: Items                   # 顯示 detail 關聯的表格
+```
+
+> 省略 `sections` 則所有欄位放在單一「Information」區段。
+
+### permissions（權限）
+
+```yaml
+permissions:
+  read: Default           # 讀取所需角色
+  create: Default         # 建立所需角色
+  update: Default         # 更新所需角色
+  delete: Administrators  # 刪除所需角色
+```
+
+> 預設值：read/create/update = `Default`，delete = `Administrators`。
 
 ---
 

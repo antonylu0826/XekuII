@@ -13,15 +13,19 @@ public class ControllerCodeGenerator
 
     // Track enum names defined in the current entity for type mapping
     private HashSet<string> _entityEnumNames = new();
+    private Dictionary<string, EntityDefinition>? _entityMap;
 
     /// <summary>
     /// Generate a complete API Controller for an entity.
     /// </summary>
-    public string Generate(EntityDefinition entity, string boNamespace = "XekuII.Generated", string controllerNamespace = "XekuII.ApiHost.Controllers")
+    public string Generate(EntityDefinition entity, string boNamespace = "XekuII.Generated", string controllerNamespace = "XekuII.ApiHost.Controllers", Dictionary<string, EntityDefinition>? entityMap = null)
     {
         var sb = new StringBuilder();
         var entityName = entity.Entity;
         var pluralName = Pluralize(entityName);
+
+        // Store entity map for cross-entity lookups
+        _entityMap = entityMap;
 
         // Build enum names set for type mapping
         _entityEnumNames = entity.Enums?.Select(e => e.Name).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new();
@@ -202,7 +206,11 @@ public class ControllerCodeGenerator
             sb.AppendLine($"{Indent}{Indent}{Indent}{detail.Name} = item.{detail.Name}?.Select(d => new {entityName}{detail.Target}ItemDto");
             sb.AppendLine($"{Indent}{Indent}{Indent}{{");
             sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}Oid = d.Oid,");
-            sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}// TODO: Add detail fields based on {detail.Target} entity");
+            if (_entityMap != null && _entityMap.TryGetValue(detail.Target, out var detailTargetEntity))
+            {
+                foreach (var f in detailTargetEntity.Fields)
+                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{f.Name} = d.{f.Name},");
+            }
             sb.AppendLine($"{Indent}{Indent}{Indent}}}).ToList() ?? new(),");
         }
         sb.AppendLine($"{Indent}{Indent}}});");
@@ -326,7 +334,13 @@ public class ControllerCodeGenerator
         sb.AppendLine($"{Indent}{Indent}var item = objectSpace.GetObjectByKey<{entityName}>(id);");
         sb.AppendLine($"{Indent}{Indent}if (item == null) return NotFound();");
         sb.AppendLine();
-        sb.AppendLine($"{Indent}{Indent}var items = item.{detailName}?.Select(d => new {{ d.Oid }}).ToList() ?? new();");
+        sb.Append($"{Indent}{Indent}var items = item.{detailName}?.Select(d => new {{ d.Oid");
+        if (_entityMap != null && _entityMap.TryGetValue(detailTarget, out var targetDef))
+        {
+            foreach (var f in targetDef.Fields)
+                sb.Append($", d.{f.Name}");
+        }
+        sb.AppendLine(" }).ToList() ?? new();");
         sb.AppendLine($"{Indent}{Indent}return Ok(items);");
         sb.AppendLine($"{Indent}}}");
         sb.AppendLine();
@@ -344,7 +358,32 @@ public class ControllerCodeGenerator
         sb.AppendLine();
         sb.AppendLine($"{Indent}{Indent}var item = objectSpace.CreateObject<{detailTarget}>();");
         sb.AppendLine($"{Indent}{Indent}item.{entityName} = parent;");
-        sb.AppendLine($"{Indent}{Indent}// TODO: Set fields from request");
+        if (_entityMap != null && _entityMap.TryGetValue(detailTarget, out var postTargetDef))
+        {
+            foreach (var f in postTargetDef.Fields.Where(f => !IsCalculatedField(f) && !f.Readonly))
+                sb.AppendLine($"{Indent}{Indent}item.{f.Name} = request.{f.Name};");
+
+            // Set reference relations (exclude the back-reference to parent and detail relations)
+            var targetRefs = postTargetDef.Relations
+                .Where(r => r.Type == "reference" && !string.Equals(r.Target, entityName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            foreach (var rel in targetRefs)
+            {
+                if (rel.Required)
+                {
+                    // Required reference: directly assign
+                    sb.AppendLine($"{Indent}{Indent}item.{rel.Name} = objectSpace.GetObjectByKey<{rel.Target}>(request.{rel.Name}Id);");
+                }
+                else
+                {
+                    // Optional reference: check HasValue
+                    sb.AppendLine($"{Indent}{Indent}if (request.{rel.Name}Id.HasValue)");
+                    sb.AppendLine($"{Indent}{Indent}{{");
+                    sb.AppendLine($"{Indent}{Indent}{Indent}item.{rel.Name} = objectSpace.GetObjectByKey<{rel.Target}>(request.{rel.Name}Id.Value);");
+                    sb.AppendLine($"{Indent}{Indent}}}");
+                }
+            }
+        }
         sb.AppendLine();
         sb.AppendLine($"{Indent}{Indent}objectSpace.CommitChanges();");
         sb.AppendLine($"{Indent}{Indent}return Ok(new {{ item.Oid }});");
@@ -363,7 +402,36 @@ public class ControllerCodeGenerator
         sb.AppendLine($"{Indent}{Indent}if (item == null) return NotFound(new {{ error = \"{detailTarget} not found\" }});");
         sb.AppendLine($"{Indent}{Indent}if (item.{entityName}?.Oid != id) return BadRequest(new {{ error = \"Item does not belong to this {entityName}\" }});");
         sb.AppendLine();
-        sb.AppendLine($"{Indent}{Indent}// TODO: Update fields from request");
+        if (_entityMap != null && _entityMap.TryGetValue(detailTarget, out var putTargetDef))
+        {
+            foreach (var f in putTargetDef.Fields.Where(f => !IsCalculatedField(f) && !f.Readonly))
+                sb.AppendLine($"{Indent}{Indent}item.{f.Name} = request.{f.Name};");
+
+            // Update reference relations (exclude the back-reference to parent and detail relations)
+            var targetRefs = putTargetDef.Relations
+                .Where(r => r.Type == "reference" && !string.Equals(r.Target, entityName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            foreach (var rel in targetRefs)
+            {
+                if (rel.Required)
+                {
+                    // Required reference: directly assign
+                    sb.AppendLine($"{Indent}{Indent}item.{rel.Name} = objectSpace.GetObjectByKey<{rel.Target}>(request.{rel.Name}Id);");
+                }
+                else
+                {
+                    // Optional reference: check HasValue, allow null
+                    sb.AppendLine($"{Indent}{Indent}if (request.{rel.Name}Id.HasValue)");
+                    sb.AppendLine($"{Indent}{Indent}{{");
+                    sb.AppendLine($"{Indent}{Indent}{Indent}item.{rel.Name} = objectSpace.GetObjectByKey<{rel.Target}>(request.{rel.Name}Id.Value);");
+                    sb.AppendLine($"{Indent}{Indent}}}");
+                    sb.AppendLine($"{Indent}{Indent}else");
+                    sb.AppendLine($"{Indent}{Indent}{{");
+                    sb.AppendLine($"{Indent}{Indent}{Indent}item.{rel.Name} = null;");
+                    sb.AppendLine($"{Indent}{Indent}}}");
+                }
+            }
+        }
         sb.AppendLine();
         sb.AppendLine($"{Indent}{Indent}objectSpace.CommitChanges();");
         sb.AppendLine($"{Indent}{Indent}return NoContent();");
@@ -467,24 +535,73 @@ public class ControllerCodeGenerator
         // Detail item DTOs and request DTOs
         foreach (var detail in details)
         {
+            EntityDefinition? targetEntity = null;
+            _entityMap?.TryGetValue(detail.Target, out targetEntity);
+            var targetFields = targetEntity?.Fields ?? new List<FieldDefinition>();
+
+            // Build enum names from target entity for type mapping
+            var targetEnumNames = targetEntity?.Enums?.Select(e => e.Name).ToHashSet(StringComparer.OrdinalIgnoreCase)
+                ?? new HashSet<string>();
+            var savedEnumNames = _entityEnumNames;
+            _entityEnumNames = new HashSet<string>(_entityEnumNames, StringComparer.OrdinalIgnoreCase);
+            foreach (var en in targetEnumNames) _entityEnumNames.Add(en);
+
+            // ItemDto - all fields (read response)
             sb.AppendLine($"public class {entityName}{detail.Target}ItemDto");
             sb.AppendLine("{");
             sb.AppendLine($"{Indent}public Guid Oid {{ get; set; }}");
-            sb.AppendLine($"{Indent}// TODO: Add {detail.Target} fields");
+            foreach (var f in targetFields)
+            {
+                var csharpType = MapType(f.Type);
+                var defaultValue = GetDefaultValue(csharpType);
+                sb.AppendLine($"{Indent}public {csharpType} {f.Name} {{ get; set; }}{defaultValue}");
+            }
             sb.AppendLine("}");
             sb.AppendLine();
+
+            // AddRequest - writable fields only (exclude formula, readonly, and back-reference to parent)
+            var writableTargetFields = targetFields.Where(f => !IsCalculatedField(f) && !f.Readonly).ToList();
+            // Get reference relations from target entity (exclude back-reference to parent)
+            var targetRefs = targetEntity?.Relations
+                .Where(r => r.Type == "reference" && !string.Equals(r.Target, entityName, StringComparison.OrdinalIgnoreCase))
+                .ToList() ?? new List<RelationDefinition>();
 
             sb.AppendLine($"public class {entityName}Add{detail.Target}Request");
             sb.AppendLine("{");
-            sb.AppendLine($"{Indent}// TODO: Add {detail.Target} create fields");
+            foreach (var f in writableTargetFields)
+            {
+                var csharpType = MapType(f.Type);
+                var defaultValue = GetDefaultValue(csharpType);
+                sb.AppendLine($"{Indent}public {csharpType} {f.Name} {{ get; set; }}{defaultValue}");
+            }
+            // Add reference relation IDs
+            foreach (var rel in targetRefs)
+            {
+                var nullable = rel.Required ? "" : "?";
+                sb.AppendLine($"{Indent}public Guid{nullable} {rel.Name}Id {{ get; set; }}");
+            }
             sb.AppendLine("}");
             sb.AppendLine();
 
+            // UpdateRequest - same as AddRequest
             sb.AppendLine($"public class {entityName}Update{detail.Target}Request");
             sb.AppendLine("{");
-            sb.AppendLine($"{Indent}// TODO: Add {detail.Target} update fields");
+            foreach (var f in writableTargetFields)
+            {
+                var csharpType = MapType(f.Type);
+                var defaultValue = GetDefaultValue(csharpType);
+                sb.AppendLine($"{Indent}public {csharpType} {f.Name} {{ get; set; }}{defaultValue}");
+            }
+            // Add reference relation IDs
+            foreach (var rel in targetRefs)
+            {
+                var nullable = rel.Required ? "" : "?";
+                sb.AppendLine($"{Indent}public Guid{nullable} {rel.Name}Id {{ get; set; }}");
+            }
             sb.AppendLine("}");
             sb.AppendLine();
+
+            _entityEnumNames = savedEnumNames;
         }
     }
 

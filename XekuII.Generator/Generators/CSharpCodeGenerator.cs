@@ -232,7 +232,9 @@ public class CSharpCodeGenerator
             sb.AppendLine($"{Indent}[PersistentAlias(\"{EscapeString(field.Formula!)}\")]");
             sb.AppendLine($"{Indent}public {csharpType} {field.Name}");
             sb.AppendLine($"{Indent}{{");
-            sb.AppendLine($"{Indent}{Indent}get => ({csharpType})EvaluateAlias(nameof({field.Name}));");
+            // Handle null from EvaluateAlias (e.g., Sum on empty collection returns null)
+            var getter = GetSafeEvaluateAliasExpression(csharpType, field.Name);
+            sb.AppendLine($"{Indent}{Indent}get => {getter};");
             sb.AppendLine($"{Indent}}}");
         }
         else
@@ -445,6 +447,29 @@ public class CSharpCodeGenerator
             "bool" => "bool",
             "guid" => "Guid",
             _ => yamlType // Return as-is for custom types/enums
+        };
+    }
+
+    /// <summary>
+    /// Generate a null-safe expression for EvaluateAlias based on the property type.
+    /// EvaluateAlias can return null (e.g., Sum on empty collection), so we need proper null handling.
+    /// </summary>
+    private static string GetSafeEvaluateAliasExpression(string csharpType, string propertyName)
+    {
+        var aliasCall = $"EvaluateAlias(nameof({propertyName}))";
+
+        return csharpType.ToLower() switch
+        {
+            "decimal" => $"{aliasCall} is decimal _v ? _v : 0m",
+            "int" => $"{aliasCall} is int _v ? _v : 0",
+            "double" => $"{aliasCall} is double _v ? _v : 0d",
+            "float" => $"{aliasCall} is float _v ? _v : 0f",
+            "long" => $"{aliasCall} is long _v ? _v : 0L",
+            "bool" => $"{aliasCall} is bool _v && _v",
+            "string" => $"{aliasCall} as string ?? string.Empty",
+            "datetime" => $"{aliasCall} is DateTime _v ? _v : default",
+            "guid" => $"{aliasCall} is Guid _v ? _v : Guid.Empty",
+            _ => $"({csharpType}){aliasCall}" // Fallback to direct cast for unknown types
         };
     }
 
