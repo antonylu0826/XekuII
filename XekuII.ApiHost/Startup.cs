@@ -125,6 +125,16 @@ public class Startup
                 };
             });
 
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            });
+        });
+
         services.AddAuthorization(options =>
         {
             options.DefaultPolicy = new AuthorizationPolicyBuilder(
@@ -189,6 +199,7 @@ public class Startup
             // The default HSTS value is 30 days. To change this for production scenarios, see: https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
+        app.UseCors("AllowAll");
         app.UseHttpsRedirection();
         app.UseRequestLocalization();
         app.UseStaticFiles();

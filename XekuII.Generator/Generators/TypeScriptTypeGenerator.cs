@@ -211,13 +211,11 @@ public class TypeScriptTypeGenerator
         if (!string.IsNullOrEmpty(enumDef.Description))
             sb.AppendLine($"/** {enumDef.Description} */");
         sb.AppendLine($"export const {enumDef.Name} = {{");
-        int autoValue = 0;
         foreach (var member in enumDef.Members)
         {
             var comment = !string.IsNullOrEmpty(member.Label) ? $" // {member.Label}" : "";
-            var value = member.Value ?? autoValue;
-            sb.AppendLine($"{Indent}{member.Name}: {value},{comment}");
-            autoValue = value + 1;
+            // Use member Name as value for string enums
+            sb.AppendLine($"{Indent}{member.Name}: \"{member.Name}\",{comment}");
         }
         sb.AppendLine("} as const;");
         sb.AppendLine($"export type {enumDef.Name} = (typeof {enumDef.Name})[keyof typeof {enumDef.Name}];");
@@ -225,13 +223,10 @@ public class TypeScriptTypeGenerator
 
         // Label map for UI display
         sb.AppendLine($"export const {enumDef.Name}Labels: Record<{enumDef.Name}, string> = {{");
-        autoValue = 0;
         foreach (var member in enumDef.Members)
         {
             var label = member.Label ?? member.Name;
-            var value = member.Value ?? autoValue;
             sb.AppendLine($"{Indent}[{enumDef.Name}.{member.Name}]: \"{EscapeString(label)}\",");
-            autoValue = value + 1;
         }
         sb.AppendLine("};");
         sb.AppendLine();

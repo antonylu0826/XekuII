@@ -1,0 +1,42 @@
+entity: PurchaseOrderItem
+caption: 採購明細
+description: 採購單的項目明細，包含數量與單價
+
+fields:
+  - name: Quantity
+    type: decimal
+    required: true
+    label: 數量
+    default: "1"
+  
+  - name: UnitPrice
+    type: decimal
+    required: true
+    label: 進貨單價
+    default: "0"
+  
+  - name: Subtotal
+    type: decimal
+    label: 小計
+    formula: "[Quantity] * [UnitPrice]"
+    calculationType: persistent
+
+relations:
+  - name: PurchaseOrder
+    type: reference
+    target: PurchaseOrder
+    label: 採購單
+  
+  - name: Product
+    type: reference
+    target: Product
+    required: true
+    label: 採購產品
+    lookupField: Name
+
+ui:
+  form:
+    layout:
+      - row: [Product]
+      - row: [Quantity, UnitPrice]
+      - row: [Subtotal]

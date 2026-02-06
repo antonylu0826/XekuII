@@ -1,0 +1,76 @@
+entity: PurchaseOrder
+caption: 採購單
+icon: BO_Order
+description: 採購單主檔，負責彙總明細與供應商關聯
+
+fields:
+  - name: PONumber
+    type: string
+    required: true
+    label: 採購單號
+    default: "NEW"
+  
+  - name: OrderDate
+    type: datetime
+    required: true
+    label: 採購日期
+    default: "now"
+  
+  - name: Status
+    type: PurchaseStatus
+    label: 狀態
+    default: "Draft"
+  
+  - name: TotalAmount
+    type: decimal
+    label: 總金額
+    formula: "[Items].Sum([Subtotal])"
+    calculationType: persistent
+
+relations:
+  - name: Supplier
+    type: reference
+    target: Supplier
+    required: true
+    label: 供應商
+    lookupField: Name
+  
+  - name: Items
+    type: detail
+    target: PurchaseOrderItem
+    label: 採購明細
+    cascade: delete
+
+enums:
+  - name: PurchaseStatus
+    members:
+      - name: Draft
+        value: 0
+        label: 草稿
+      - name: Issued
+        value: 1
+        label: 已發出
+      - name: Received
+        value: 2
+        label: 已收貨
+      - name: Cancelled
+        value: 3
+        label: 已取消
+
+ui:
+  list:
+    columns: [PONumber, OrderDate, Supplier, Status, TotalAmount]
+    searchable: [PONumber]
+    filterable: [Status, Supplier]
+  form:
+    layout:
+      - row: [PONumber, OrderDate]
+      - row: [Supplier, Status]
+  detail:
+    sections:
+      - title: 基本資訊
+        fields: [PONumber, OrderDate, Supplier, Status]
+      - title: 金額統計
+        fields: [TotalAmount]
+      - title: 採購明細
+        relation: Items

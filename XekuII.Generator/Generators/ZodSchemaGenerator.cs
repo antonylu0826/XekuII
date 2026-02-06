@@ -23,6 +23,10 @@ public class ZodSchemaGenerator
         sb.AppendLine($"// Generated at: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         sb.AppendLine();
         sb.AppendLine("import { z } from \"zod\";");
+        if (entity.Enums != null && entity.Enums.Count > 0)
+        {
+             sb.AppendLine($"import {{ {string.Join(", ", entity.Enums.Select(e => e.Name))} }} from \"../types/{ToKebabCase(entityName)}.types.generated\";");
+        }
         sb.AppendLine();
 
         // Create schema
@@ -37,6 +41,7 @@ public class ZodSchemaGenerator
         foreach (var field in writableFields)
         {
             var chain = BuildZodChain(field, entity.Enums);
+            if (!string.IsNullOrEmpty(field.Formula)) chain += ".optional()";
             sb.AppendLine($"{Indent}{ToCamelCase(field.Name)}: {chain},");
         }
 
@@ -79,6 +84,7 @@ public class ZodSchemaGenerator
             foreach (var f in writableTargetFields)
             {
                 var chain = BuildZodChain(f, targetEntity.Enums);
+                if (!string.IsNullOrEmpty(f.Formula)) chain += ".optional()";
                 sb.AppendLine($"{Indent}{ToCamelCase(f.Name)}: {chain},");
             }
             // Add reference relation IDs
@@ -116,7 +122,7 @@ public class ZodSchemaGenerator
             "bool" => "z.boolean()",
             "datetime" => "z.string()",
             "guid" => "z.string().uuid()",
-            _ when enumNames.Contains(field.Type) => "z.number().int()",
+            _ when enumNames.Contains(field.Type) => $"z.nativeEnum({field.Type})",
             _ => "z.unknown()",
         };
 
@@ -139,6 +145,8 @@ public class ZodSchemaGenerator
         {
             chain += BuildValidationChain(v);
         }
+
+
 
         return chain;
     }

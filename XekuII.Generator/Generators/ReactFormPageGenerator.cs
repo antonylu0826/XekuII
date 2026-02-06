@@ -63,6 +63,24 @@ public class ReactFormPageGenerator
             sb.AppendLine($"import {{ {string.Join(", ", enumImports)} }} from \"../../types/{kebab}.types.generated\";");
         }
 
+        // --- 收集詳細實體使用的列舉 ---
+        if (hasDetails && entityMap != null)
+        {
+            var detailEnums = new HashSet<string>();
+            foreach (var detail in details)
+            {
+                if (entityMap.TryGetValue(detail.Target, out var te) && te.Enums != null)
+                {
+                    foreach (var e in te.Enums) detailEnums.Add(e.Name);
+                }
+            }
+            if (detailEnums.Count > 0)
+            {
+                var detailEnumImports = detailEnums.SelectMany(e => new[] { e, e + "Labels" }).ToList();
+                sb.AppendLine($"import {{ {string.Join(", ", detailEnumImports)} }} from \"../../types/{kebab}.types.generated\";");
+            }
+        }
+
         var hasLayout = entity.Ui?.Form?.Layout is { Count: > 0 };
         var formImports = "EntityForm, type FieldConfig";
         if (hasLayout) formImports += ", type FormRowConfig";
@@ -103,7 +121,7 @@ public class ReactFormPageGenerator
                     sb.AppendLine($"{Indent}{Indent}{Indent}<select");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}className=\"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm\"");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}value={{String(value ?? \"\")}}");
-                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onChange={{(e) => onChange(Number(e.target.value))}}");
+                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}onChange={{(e) => onChange(e.target.value)}}");
                     sb.AppendLine($"{Indent}{Indent}{Indent}>");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}<option value=\"\">Select...</option>");
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{{Object.entries({enumDef.Name}Labels).map(([k, v]) => (");
@@ -292,7 +310,15 @@ public class ReactFormPageGenerator
                 foreach (var f in targetEntity.Fields)
                 {
                     var camelF = ToCamelCase(f.Name);
-                    sb.AppendLine($"{Indent}{camelF}: {GetDefaultForType(f, targetEntity.Enums)},");
+                    var defaultValue = GetDefaultForType(f, targetEntity.Enums);
+                    // 如果是列舉類型，確保使用 Enum.Member 格式
+                    if (targetEntity.Enums?.Any(e => e.Name.Equals(f.Type, StringComparison.OrdinalIgnoreCase)) == true)
+                    {
+                        var enumDef = targetEntity.Enums.First(e => e.Name.Equals(f.Type, StringComparison.OrdinalIgnoreCase));
+                        var defStr = f.Default ?? enumDef.Members.FirstOrDefault()?.Name ?? enumDef.Members.First().Name;
+                        defaultValue = $"{enumDef.Name}.{defStr}";
+                    }
+                    sb.AppendLine($"{Indent}{camelF}: {defaultValue},");
                 }
                 foreach (var rel in targetRefs)
                 {

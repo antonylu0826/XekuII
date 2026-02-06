@@ -1,0 +1,39 @@
+entity: Product
+caption: 產品
+icon: BO_Product
+description: 產品基本資料管理
+
+fields:
+  - name: SKU
+    type: string
+    required: true
+    length: 20
+    label: 產品編號
+    validations:
+      - regex: "^[A-Z0-9-]{3,20}$"
+        message: "產品編號僅限英數字與連字號"
+
+  - name: Name
+    type: string
+    required: true
+    length: 100
+    label: 產品名稱
+
+  - name: StandardCost
+    type: decimal
+    label: 標準進價
+    default: "0"
+
+  - name: StockQuantity
+    type: int
+    label: 庫存數量
+    default: "0"
+
+ui:
+  list:
+    columns: [SKU, Name, StandardCost, StockQuantity]
+    searchable: [SKU, Name]
+  form:
+    layout:
+      - row: [SKU, Name]
+      - row: [StandardCost, StockQuantity]

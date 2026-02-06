@@ -67,9 +67,9 @@ public static class ReactGeneratorUtils
                 "string" => $"\"{field.Default}\"",
                 "bool" => field.Default.ToLower(),
                 "datetime" when field.Default.Equals("now", StringComparison.OrdinalIgnoreCase)
-                    => "new Date().toISOString()",
+                    => "new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)",
                 "datetime" when field.Default.Equals("today", StringComparison.OrdinalIgnoreCase)
-                    => "new Date().toISOString().split('T')[0]",
+                    => "new Date(new Date().setHours(0,0,0,0) - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)",
                 "datetime" => $"\"{field.Default}\"",
                 _ => field.Default,
             };

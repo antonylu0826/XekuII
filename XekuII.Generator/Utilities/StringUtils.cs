@@ -13,7 +13,41 @@ public static class StringUtils
     public static string ToCamelCase(string name)
     {
         if (string.IsNullOrEmpty(name)) return name;
-        return char.ToLower(name[0]) + name[1..];
+        
+        if (!char.IsUpper(name[0])) return name;
+
+        char[] chars = name.ToCharArray();
+
+        for (int i = 0; i < chars.Length; i++)
+        {
+            if (i > 0 && !char.IsUpper(chars[i])) break;
+            
+            // Check if the next character is lower case.
+            // If so, we found the end of the acronym.
+            // We should stop lowercasing, unless we are at the first character.
+            // Example: "IOStream" -> "ioStream" (i=1 is 'O', i+1='S', wait.. S is upper)
+            
+            // Example "Power" -> 'P', next 'o'. i=0. Lower 'P'.
+            
+            // Example "SKU" -> S(next K), K(next U), U(next end). All lower.
+            
+            // Correct logic based on System.Text.Json:
+            // "If the first two characters are uppercase, we assume it is an acronym and lowercase valid uppercase characters."
+            
+            bool hasNext = (i + 1 < chars.Length);
+            
+            if (i > 0 && hasNext && !char.IsUpper(chars[i + 1]))
+            {
+                // Current is Upper, Next is Lower.
+                // This is the last character of the acronym (e.g. 'T' in "IPTree").
+                // We should keep this uppercase, UNLESS it is the very first character.
+                break;
+            }
+
+            chars[i] = char.ToLowerInvariant(chars[i]);
+        }
+        
+        return new string(chars);
     }
 
     /// <summary>

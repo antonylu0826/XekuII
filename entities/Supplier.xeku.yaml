@@ -1,0 +1,34 @@
+entity: Supplier
+caption: 供應商
+icon: BO_Customer
+description: 供應商基本資料管理
+
+fields:
+  - name: Name
+    type: string
+    required: true
+    label: 供應商名稱
+    description: 供應商的公司全名
+  
+  - name: ContactPerson
+    type: string
+    label: 聯絡人
+  
+  - name: Phone
+    type: string
+    label: 聯絡電話
+  
+  - name: Address
+    type: string
+    label: 地址
+    length: 200
+
+ui:
+  list:
+    columns: [Name, ContactPerson, Phone]
+    searchable: [Name, ContactPerson]
+  form:
+    layout:
+      - row: [Name]
+      - row: [ContactPerson, Phone]
+      - row: [Address]
