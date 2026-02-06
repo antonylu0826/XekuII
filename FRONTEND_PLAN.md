@@ -767,49 +767,49 @@ XekuII.CLI generate ./entities --api       # 僅後端
 
 **目標**：建立可運行的前端專案，包含佈局、認證、共用元件
 
-- [ ] 初始化 Vite + React + TypeScript 專案
-- [ ] 安裝與配置 Tailwind CSS v4
-- [ ] 安裝與配置 shadcn/ui
-- [ ] 安裝 TanStack Query、TanStack Router、React Hook Form、Zod、Axios、Zustand
-- [ ] 實作 `lib/api-client.ts`（Axios + JWT interceptor）
-- [ ] 實作 `lib/auth.ts`（Zustand 認證 store）
-- [ ] 實作 `lib/types.ts`（共用型別）
-- [ ] 實作 `pages/LoginPage.tsx`
-- [ ] 實作 `components/layout/`（AppLayout, Sidebar, Header）
-- [ ] 實作 `components/shared/EntityDataTable.tsx`
-- [ ] 實作 `components/shared/EntityForm.tsx`
-- [ ] 實作 `components/shared/ReferenceSelect.tsx`
-- [ ] 配置 proxy 到 localhost:5000
+- [X] 初始化 Vite + React + TypeScript 專案
+- [X] 安裝與配置 Tailwind CSS v4
+- [X] 安裝與配置 shadcn/ui
+- [X] 安裝 TanStack Query、TanStack Router、React Hook Form、Zod、Axios、Zustand
+- [X] 實作 `lib/api-client.ts`（Axios + JWT interceptor）
+- [X] 實作 `lib/auth.ts`（Zustand 認證 store）
+- [X] 實作 `lib/types.ts`（共用型別）
+- [X] 實作 `pages/LoginPage.tsx`
+- [X] 實作 `components/layout/`（AppLayout, Sidebar, Header）
+- [X] 實作 `components/shared/EntityDataTable.tsx`
+- [X] 實作 `components/shared/EntityForm.tsx`
+- [X] 實作 `components/shared/ReferenceSelect.tsx`
+- [X] 配置 proxy 到 localhost:5000
 
 ### P1：Generator 擴展 — 型別與驗證
 
 **目標**：YAML → TypeScript Types + Zod Schema
 
-- [ ] 新增 `Models/UiDefinition.cs` 和 `Models/PermissionsDefinition.cs`
-- [ ] 擴展 `EntityDefinition.cs` 加入 `Ui` 和 `Permissions` 屬性
-- [ ] 實作 `Generators/TypeScriptTypeGenerator.cs`
-- [ ] 實作 `Generators/ZodSchemaGenerator.cs`
-- [ ] 擴展 `XekuGenerator.cs` 支援 `--frontend` 參數
-- [ ] 單元測試：驗證各型別映射正確
+- [X] 新增 `Models/UiDefinition.cs` 和 `Models/PermissionsDefinition.cs`
+- [X] 擴展 `EntityDefinition.cs` 加入 `Ui` 和 `Permissions` 屬性
+- [X] 實作 `Generators/TypeScriptTypeGenerator.cs`
+- [X] 實作 `Generators/ZodSchemaGenerator.cs`
+- [X] 擴展 `XekuGenerator.cs` 支援 `--frontend` 參數
+- [X] 單元測試：驗證各型別映射正確
 
 ### P2：Generator 擴展 — API Client 與列表頁
 
 **目標**：YAML → API Client + ListPage
 
-- [ ] 實作 `Generators/ApiClientGenerator.cs`
-- [ ] 實作 `Generators/ReactPageGenerator.cs`（先做 ListPage）
-- [ ] 生成 `routes.generated.ts` 和 `navigation.generated.ts`
-- [ ] 端對端驗證：定義一個測試 YAML → 生成 → 前端列表頁可正常顯示資料
+- [X] 實作 `Generators/ApiClientGenerator.cs`
+- [X] 實作 `Generators/ReactPageGenerator.cs`（先做 ListPage）
+- [X] 生成 `routes.generated.ts` 和 `navigation.generated.ts`
+- [X] 端對端驗證：定義一個測試 YAML → 生成 → 前端列表頁可正常顯示資料
 
 ### P3：Generator 擴展 — 表單頁與詳情頁
 
 **目標**：YAML → FormPage + DetailPage
 
-- [ ] `ReactPageGenerator` 加入 FormPage 生成
-- [ ] `ReactPageGenerator` 加入 DetailPage 生成
-- [ ] 表單與 Zod schema 整合驗證
-- [ ] Detail 子表格行內 CRUD
-- [ ] 端對端驗證：完整 CRUD 流程（列表→新增→檢視→編輯→刪除）
+- [X] `ReactPageGenerator` 加入 FormPage 生成
+- [X] `ReactPageGenerator` 加入 DetailPage 生成
+- [X] 表單與 Zod schema 整合驗證
+- [X] Detail 子表格行內 CRUD
+- [X] 端對端驗證：完整 CRUD 流程（列表→新增→檢視→編輯→刪除）
 
 ### P4：進階功能
 
