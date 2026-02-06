@@ -28,10 +28,15 @@ public class ReactFormPageGenerator
         sb.AppendLine($"// Generated at: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         sb.AppendLine();
 
-        sb.AppendLine("import { useQuery, useMutation, useQueryClient } from \"@tanstack/react-query\";");
+        if (hasDetails)
+            sb.AppendLine("import { useQuery, useQueryClient } from \"@tanstack/react-query\";");
+        else
+            sb.AppendLine("import { useQuery, useMutation, useQueryClient } from \"@tanstack/react-query\";");
         sb.AppendLine("import { useNavigate, useParams } from \"@tanstack/react-router\";");
         if (hasDetails)
             sb.AppendLine("import { useState, useEffect } from \"react\";");
+        else
+            sb.AppendLine("import { useEffect } from \"react\";");
         sb.AppendLine($"import {{ {camelName}Api }} from \"../../api/{kebab}.api.generated\";");
         sb.AppendLine($"import {{ create{entityName}Schema }} from \"../../schemas/{kebab}.schema.generated\";");
         sb.AppendLine($"import type {{ Create{entityName}Dto }} from \"../../types/{kebab}.types.generated\";");
@@ -42,7 +47,6 @@ public class ReactFormPageGenerator
             var detailSchemaImports = new List<string>();
             foreach (var detail in details)
             {
-                detailTypeImports.Add($"{detail.Target}Summary");
                 detailTypeImports.Add($"Create{detail.Target}ItemDto");
                 detailSchemaImports.Add($"create{detail.Target}ItemSchema");
             }
@@ -96,9 +100,9 @@ public class ReactFormPageGenerator
             sb.AppendLine("import { ReferenceSelect } from \"@/components/shared/ReferenceSelect\";");
         sb.AppendLine("import { PageLoading } from \"@/components/shared/LoadingSpinner\";");
         sb.AppendLine("import { toast } from \"sonner\";");
-        sb.AppendLine("import { Input } from \"@/components/ui/input\";");
-        sb.AppendLine("import { Button } from \"@/components/ui/button\";");
-        sb.AppendLine("import { Eye, Pencil, Trash2, Plus, ArrowLeft } from \"lucide-react\";");
+        sb.AppendLine("import { useEntityPermissions } from \"@/hooks/usePermissions\";");
+        if (hasDetails)
+            sb.AppendLine("import { Input } from \"@/components/ui/input\";");
         sb.AppendLine();
 
         sb.AppendLine($"const fieldConfigs: FieldConfig[] = [");
@@ -337,6 +341,7 @@ public class ReactFormPageGenerator
         sb.AppendLine($"{Indent}const params = useParams({{ strict: false }});");
         sb.AppendLine($"{Indent}const id = (params as Record<string, string | undefined>).id;");
         sb.AppendLine($"{Indent}const isEdit = !!id;");
+        sb.AppendLine($"{Indent}const {{ canCreate, canUpdate, loaded: permissionsLoaded }} = useEntityPermissions(\"{entityName}\");");
         if (hasDetails)
             sb.AppendLine($"{Indent}const [saving, setSaving] = useState(false);");
         sb.AppendLine();
@@ -461,6 +466,14 @@ public class ReactFormPageGenerator
             sb.AppendLine();
         }
 
+        sb.AppendLine($"{Indent}useEffect(() => {{");
+        sb.AppendLine($"{Indent}{Indent}if (!permissionsLoaded) return;");
+        sb.AppendLine($"{Indent}{Indent}if ((!isEdit && !canCreate) || (isEdit && !canUpdate)) {{");
+        sb.AppendLine($"{Indent}{Indent}{Indent}toast.error(\"You don't have permission to perform this action\");");
+        sb.AppendLine($"{Indent}{Indent}{Indent}navigate({{ to: \"/{kebabPlural}\" }});");
+        sb.AppendLine($"{Indent}{Indent}}}");
+        sb.AppendLine($"{Indent}}}, [isEdit, canCreate, canUpdate, permissionsLoaded, navigate]);");
+        sb.AppendLine();
         sb.AppendLine($"{Indent}if (isEdit && isLoading) return <PageLoading />;");
         sb.AppendLine();
 

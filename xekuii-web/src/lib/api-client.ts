@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "sonner";
 
 export const apiClient = axios.create({
   baseURL: "/api",
@@ -21,6 +22,8 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("xekuii-token");
       window.location.href = "/login";
+    } else if (error.response?.status === 403) {
+      toast.error("您沒有執行此操作的權限");
     }
     return Promise.reject(error);
   },

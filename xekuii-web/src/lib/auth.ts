@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { apiClient } from "./api-client";
+import { usePermissionsStore } from "./permissions";
 
 interface AuthState {
   token: string | null;
@@ -28,10 +29,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     const token = response.data.token ?? response.data;
     localStorage.setItem("xekuii-token", token);
     set({ token, isAuthenticated: true });
+    await usePermissionsStore.getState().fetchPermissions();
   },
 
   logout: () => {
     localStorage.removeItem("xekuii-token");
     set({ token: null, isAuthenticated: false });
+    usePermissionsStore.getState().clear();
+    window.location.href = "/login";
   },
 }));

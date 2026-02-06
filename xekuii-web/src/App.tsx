@@ -11,6 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "@/lib/query-client";
 import { useAuthStore } from "@/lib/auth";
+import { usePermissionsStore } from "@/lib/permissions";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoginPage } from "@/pages/LoginPage";
 import { DashboardPage } from "@/pages/DashboardPage";
@@ -79,6 +80,9 @@ export default function App() {
 
   useEffect(() => {
     initialize();
+    if (localStorage.getItem("xekuii-token")) {
+      usePermissionsStore.getState().fetchPermissions();
+    }
   }, [initialize]);
 
   const router = useMemo(() => buildRouter(), []);

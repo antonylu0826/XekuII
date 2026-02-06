@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/lib/types";
+import { usePermissionsStore } from "@/lib/permissions";
 import {
   Package,
   Folder,
@@ -42,6 +43,12 @@ interface SidebarProps {
 
 export function Sidebar({ navItems }: SidebarProps) {
   const location = useLocation();
+  const can = usePermissionsStore((s) => s.can);
+  const permissionsLoaded = usePermissionsStore((s) => s.loaded);
+
+  const filteredNavItems = navItems.filter(
+    (item) => !item.entity || !permissionsLoaded || can(item.entity, "read"),
+  );
 
   return (
     <aside className="flex h-full w-60 flex-col border-r bg-sidebar text-sidebar-foreground">
@@ -66,12 +73,12 @@ export function Sidebar({ navItems }: SidebarProps) {
             Dashboard
           </Link>
         </div>
-        {navItems.length > 0 && (
+        {filteredNavItems.length > 0 && (
           <>
             <div className="mb-1 mt-4 px-3 text-xs font-medium text-sidebar-foreground/50">
               Entities
             </div>
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = getIcon(item.icon);
               const isActive = location.pathname.startsWith(item.path);
               return (

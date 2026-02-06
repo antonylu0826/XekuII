@@ -54,6 +54,7 @@ public class ReactListPageGenerator
             sb.AppendLine("import { Badge } from \"@/components/ui/badge\";");
         sb.AppendLine("import { Tooltip, TooltipContent, TooltipTrigger } from \"@/components/ui/tooltip\";");
         sb.AppendLine("import { Plus, Eye, Pencil, Trash2 } from \"lucide-react\";");
+        sb.AppendLine("import { useEntityPermissions } from \"@/hooks/usePermissions\";");
         sb.AppendLine();
 
         var caption = entity.Caption ?? entityName;
@@ -61,6 +62,7 @@ public class ReactListPageGenerator
         sb.AppendLine($"{Indent}const navigate = useNavigate();");
         sb.AppendLine($"{Indent}const queryClient = useQueryClient();");
         sb.AppendLine($"{Indent}const [deleteTarget, setDeleteTarget] = useState<{{ id: string; name: string }} | null>(null);");
+        sb.AppendLine($"{Indent}const {{ canCreate, canUpdate, canDelete }} = useEntityPermissions(\"{entityName}\");");
         sb.AppendLine();
 
         sb.AppendLine($"{Indent}const {{ data, isLoading }} = useQuery({{");
@@ -99,22 +101,26 @@ public class ReactListPageGenerator
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</TooltipTrigger>");
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipContent>View</TooltipContent>");
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}</Tooltip>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}<Tooltip>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipTrigger asChild>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" onClick={{() => navigate({{ to: \"/{ToKebabCase(pluralName)}/$id/edit\", params: {{ id: item.id }} }})}}>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Pencil className=\"h-4 w-4\" />");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</TooltipTrigger>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipContent>Edit</TooltipContent>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}</Tooltip>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}<Tooltip>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipTrigger asChild>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8 text-destructive hover:text-destructive\" onClick={{() => setDeleteTarget({{ id: item.id, name: String(item.id) }})}}>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Trash2 className=\"h-4 w-4\" />");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</TooltipTrigger>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipContent>Delete</TooltipContent>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}</Tooltip>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{{canUpdate && (");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<Tooltip>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipTrigger asChild>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" onClick={{() => navigate({{ to: \"/{ToKebabCase(pluralName)}/$id/edit\", params: {{ id: item.id }} }})}}>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Pencil className=\"h-4 w-4\" />");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</TooltipTrigger>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipContent>Edit</TooltipContent>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</Tooltip>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent})}}");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{{canDelete && (");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<Tooltip>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipTrigger asChild>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8 text-destructive hover:text-destructive\" onClick={{() => setDeleteTarget({{ id: item.id, name: String(item.id) }})}}>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Trash2 className=\"h-4 w-4\" />");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</TooltipTrigger>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<TooltipContent>Delete</TooltipContent>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</Tooltip>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent})}}");
         sb.AppendLine($"{Indent}{Indent}{Indent}</div>");
         sb.AppendLine($"{Indent}{Indent});");
         sb.AppendLine($"{Indent}}}");
@@ -138,9 +144,11 @@ public class ReactListPageGenerator
         sb.AppendLine($"{Indent}{Indent}<div className=\"space-y-4\">");
         sb.AppendLine($"{Indent}{Indent}{Indent}<div className=\"flex items-center justify-between\">");
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}<h1 className=\"text-2xl font-bold\">{caption}</h1>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}<Button onClick={{() => navigate({{ to: \"/{ToKebabCase(pluralName)}/new\" }})}}>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<Plus className=\"mr-2 h-4 w-4\" /> New");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}</Button>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{{canCreate && (");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<Button onClick={{() => navigate({{ to: \"/{ToKebabCase(pluralName)}/new\" }})}}>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Plus className=\"mr-2 h-4 w-4\" /> New");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent})}}");
         sb.AppendLine($"{Indent}{Indent}{Indent}</div>");
 
         var searchCol = searchable.Count > 0 ? ToCamelCase(searchable[0]) : null;

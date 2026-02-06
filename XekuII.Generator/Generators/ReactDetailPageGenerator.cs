@@ -61,6 +61,7 @@ public class ReactDetailPageGenerator
             sb.AppendLine("import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from \"@/components/ui/table\";");
         sb.AppendLine("import { Pencil, Trash2, ArrowLeft } from \"lucide-react\";");
         sb.AppendLine("import { toast } from \"sonner\";");
+        sb.AppendLine("import { useEntityPermissions } from \"@/hooks/usePermissions\";");
         sb.AppendLine();
 
         sb.AppendLine($"export function {entityName}DetailPage() {{");
@@ -68,6 +69,7 @@ public class ReactDetailPageGenerator
         sb.AppendLine($"{Indent}const queryClient = useQueryClient();");
         sb.AppendLine($"{Indent}const {{ id }} = useParams({{ strict: false }}) as {{ id: string }};");
         sb.AppendLine($"{Indent}const [showDelete, setShowDelete] = useState(false);");
+        sb.AppendLine($"{Indent}const {{ canUpdate, canDelete }} = useEntityPermissions(\"{entityName}\");");
         sb.AppendLine();
 
         if (hasDetails)
@@ -115,12 +117,16 @@ public class ReactDetailPageGenerator
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<h1 className=\"text-2xl font-bold\">{caption} Detail</h1>");
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}</div>");
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}<div className=\"flex gap-2\">");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"outline\" onClick={{() => navigate({{ to: \"/{kebabPlural}/$id/edit\", params: {{ id }} }})}}>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Pencil className=\"mr-2 h-4 w-4\" /> Edit");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"destructive\" onClick={{() => setShowDelete(true)}}>");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Trash2 className=\"mr-2 h-4 w-4\" /> Delete");
-        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{{canUpdate && (");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"outline\" onClick={{() => navigate({{ to: \"/{kebabPlural}/$id/edit\", params: {{ id }} }})}}>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Pencil className=\"mr-2 h-4 w-4\" /> Edit");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent})}}");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{{canDelete && (");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Button variant=\"destructive\" onClick={{() => setShowDelete(true)}}>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}<Trash2 className=\"mr-2 h-4 w-4\" /> Delete");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent}{Indent}</Button>");
+        sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{Indent})}}");
         sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}</div>");
         sb.AppendLine($"{Indent}{Indent}{Indent}</div>");
         sb.AppendLine();

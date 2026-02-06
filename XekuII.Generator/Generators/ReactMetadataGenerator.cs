@@ -62,7 +62,7 @@ public class ReactMetadataGenerator
             var label = entity.Caption ?? entity.Entity;
             var path = $"/{ToKebabCase(Pluralize(entity.Entity))}";
             var icon = MapIcon(entity.Icon);
-            sb.AppendLine($"  {{ label: \"{EscapeString(label)}\", path: \"{path}\", icon: \"{icon}\" }},");
+            sb.AppendLine($"  {{ label: \"{EscapeString(label)}\", path: \"{path}\", icon: \"{icon}\", entity: \"{entity.Entity}\" }},");
         }
 
         sb.AppendLine("];");

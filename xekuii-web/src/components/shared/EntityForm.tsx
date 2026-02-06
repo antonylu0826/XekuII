@@ -19,7 +19,7 @@ export interface FieldConfig {
   label: string;
   type: "text" | "number" | "boolean" | "textarea" | "select" | "date" | "custom";
   placeholder?: string;
-  render?: (field: { value: unknown; onChange: (v: unknown) => void }, methods: { setValue: (name: string, value: unknown) => void; getValues: (name: string) => unknown }) => ReactNode;
+  render?: (field: { value: unknown; onChange: (v: unknown) => void }, methods: { setValue: (name: string, value: unknown, options?: { shouldValidate?: boolean; shouldDirty?: boolean }) => void; getValues: (name: string) => unknown }) => ReactNode;
 }
 
 export interface FormRowConfig {
