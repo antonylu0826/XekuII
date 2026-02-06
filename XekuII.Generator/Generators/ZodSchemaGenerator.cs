@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using XekuII.Generator.Models;
+using static XekuII.Generator.Utilities.StringUtils;
 
 namespace XekuII.Generator.Generators;
 
@@ -36,12 +37,12 @@ public class ZodSchemaGenerator
         foreach (var field in writableFields)
         {
             var chain = BuildZodChain(field, entity.Enums);
-            sb.AppendLine($"{Indent}{TypeScriptTypeGenerator.ToCamelCase(field.Name)}: {chain},");
+            sb.AppendLine($"{Indent}{ToCamelCase(field.Name)}: {chain},");
         }
 
         foreach (var rel in references)
         {
-            sb.AppendLine($"{Indent}{TypeScriptTypeGenerator.ToCamelCase(rel.Name)}Id: z.string().uuid().nullable(),");
+            sb.AppendLine($"{Indent}{ToCamelCase(rel.Name)}Id: z.string().uuid().nullable(),");
         }
 
         sb.AppendLine("});");
@@ -77,13 +78,13 @@ public class ZodSchemaGenerator
             foreach (var f in writableTargetFields)
             {
                 var chain = BuildZodChain(f, targetEntity.Enums);
-                sb.AppendLine($"{Indent}{TypeScriptTypeGenerator.ToCamelCase(f.Name)}: {chain},");
+                sb.AppendLine($"{Indent}{ToCamelCase(f.Name)}: {chain},");
             }
             // Add reference relation IDs
             foreach (var rel in targetRefs)
             {
                 var refSchema = rel.Required ? "z.string().uuid()" : "z.string().uuid().nullable()";
-                sb.AppendLine($"{Indent}{TypeScriptTypeGenerator.ToCamelCase(rel.Name)}Id: {refSchema},");
+                sb.AppendLine($"{Indent}{ToCamelCase(rel.Name)}Id: {refSchema},");
             }
             sb.AppendLine("});");
             sb.AppendLine();
@@ -185,8 +186,4 @@ public class ZodSchemaGenerator
         return sb.ToString();
     }
 
-    private static string EscapeString(string input)
-    {
-        return input.Replace("\\", "\\\\").Replace("\"", "\\\"");
-    }
 }

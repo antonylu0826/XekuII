@@ -1,6 +1,7 @@
 using XekuII.Generator.Generators;
 using XekuII.Generator.Models;
 using XekuII.Generator.Parsers;
+using static XekuII.Generator.Utilities.StringUtils;
 
 namespace XekuII.Generator;
 
@@ -143,34 +144,13 @@ public class XekuGenerator
         File.WriteAllText(Path.Combine(pagesDir, $"{entity.Entity}ListPage.generated.tsx"), listCode);
         Console.WriteLine($"  🌐 pages/{kebabName}/{entity.Entity}ListPage.generated.tsx");
 
-        var formCode = _reactPageGenerator.GenerateFormPage(entity);
+        var formCode = _reactPageGenerator.GenerateFormPage(entity, entityMap);
         File.WriteAllText(Path.Combine(pagesDir, $"{entity.Entity}FormPage.generated.tsx"), formCode);
         Console.WriteLine($"  🌐 pages/{kebabName}/{entity.Entity}FormPage.generated.tsx");
 
         var detailCode = _reactPageGenerator.GenerateDetailPage(entity, entityMap);
         File.WriteAllText(Path.Combine(pagesDir, $"{entity.Entity}DetailPage.generated.tsx"), detailCode);
         Console.WriteLine($"  🌐 pages/{kebabName}/{entity.Entity}DetailPage.generated.tsx");
-    }
-
-    private static string ToKebabCase(string name)
-    {
-        var result = new System.Text.StringBuilder();
-        for (int i = 0; i < name.Length; i++)
-        {
-            if (char.IsUpper(name[i]) && i > 0)
-                result.Append('-');
-            result.Append(char.ToLower(name[i]));
-        }
-        return result.ToString();
-    }
-
-    private string Pluralize(string name)
-    {
-        if (name.EndsWith("y") && !name.EndsWith("ay") && !name.EndsWith("ey") && !name.EndsWith("oy") && !name.EndsWith("uy"))
-            return name.Substring(0, name.Length - 1) + "ies";
-        if (name.EndsWith("s") || name.EndsWith("x") || name.EndsWith("ch") || name.EndsWith("sh"))
-            return name + "es";
-        return name + "s";
     }
 
     /// <summary>

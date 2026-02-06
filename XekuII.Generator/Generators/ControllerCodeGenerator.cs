@@ -1,5 +1,6 @@
 using System.Text;
 using XekuII.Generator.Models;
+using static XekuII.Generator.Utilities.StringUtils;
 
 namespace XekuII.Generator.Generators;
 
@@ -210,6 +211,16 @@ public class ControllerCodeGenerator
             {
                 foreach (var f in detailTargetEntity.Fields)
                     sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{f.Name} = d.{f.Name},");
+
+                // Include reference fields from detail entity (exclude back-reference to parent)
+                var detailRefs = detailTargetEntity.Relations
+                    .Where(r => r.Type == "reference" && !string.Equals(r.Target, entity.Entity, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                foreach (var rel in detailRefs)
+                {
+                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{rel.Name}Id = d.{rel.Name}?.Oid ?? Guid.Empty,");
+                    sb.AppendLine($"{Indent}{Indent}{Indent}{Indent}{rel.Name}Name = d.{rel.Name}?.ToString(),");
+                }
             }
             sb.AppendLine($"{Indent}{Indent}{Indent}}}).ToList() ?? new(),");
         }
@@ -339,6 +350,16 @@ public class ControllerCodeGenerator
         {
             foreach (var f in targetDef.Fields)
                 sb.Append($", d.{f.Name}");
+
+            // Include reference fields (exclude back-reference to parent)
+            var targetRefs = targetDef.Relations
+                .Where(r => r.Type == "reference" && !string.Equals(r.Target, entityName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            foreach (var rel in targetRefs)
+            {
+                sb.Append($", {rel.Name}Id = d.{rel.Name}?.Oid ?? Guid.Empty");
+                sb.Append($", {rel.Name}Name = d.{rel.Name}?.ToString()");
+            }
         }
         sb.AppendLine(" }).ToList() ?? new();");
         sb.AppendLine($"{Indent}{Indent}return Ok(items);");
@@ -556,6 +577,15 @@ public class ControllerCodeGenerator
                 var defaultValue = GetDefaultValue(csharpType);
                 sb.AppendLine($"{Indent}public {csharpType} {f.Name} {{ get; set; }}{defaultValue}");
             }
+            // Include reference fields (exclude back-reference to parent)
+            var itemDtoRefs = targetEntity?.Relations
+                .Where(r => r.Type == "reference" && !string.Equals(r.Target, entityName, StringComparison.OrdinalIgnoreCase))
+                .ToList() ?? new List<RelationDefinition>();
+            foreach (var rel in itemDtoRefs)
+            {
+                sb.AppendLine($"{Indent}public Guid {rel.Name}Id {{ get; set; }}");
+                sb.AppendLine($"{Indent}public string? {rel.Name}Name {{ get; set; }}");
+            }
             sb.AppendLine("}");
             sb.AppendLine();
 
@@ -637,15 +667,6 @@ public class ControllerCodeGenerator
             "guid" => "Guid",
             _ => yamlType // Return as-is for custom types/enums from other entities
         };
-    }
-
-    private string Pluralize(string name)
-    {
-        if (name.EndsWith("y") && !name.EndsWith("ay") && !name.EndsWith("ey") && !name.EndsWith("oy") && !name.EndsWith("uy"))
-            return name.Substring(0, name.Length - 1) + "ies";
-        if (name.EndsWith("s") || name.EndsWith("x") || name.EndsWith("ch") || name.EndsWith("sh"))
-            return name + "es";
-        return name + "s";
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using System.Text;
 using XekuII.Generator.Models;
+using static XekuII.Generator.Utilities.StringUtils;
 
 namespace XekuII.Generator.Generators;
 
@@ -112,6 +113,15 @@ public class TypeScriptTypeGenerator
                     {
                         var tsType = MapType(f.Type, targetEntity.Enums);
                         sb.AppendLine($"{Indent}{ToCamelCase(f.Name)}: {tsType};");
+                    }
+                    // Include reference fields (exclude back-reference to parent)
+                    var targetRefs = targetEntity.Relations
+                        .Where(r => r.Type == "reference" && !string.Equals(r.Target, entity.Entity, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                    foreach (var rel in targetRefs)
+                    {
+                        sb.AppendLine($"{Indent}{ToCamelCase(rel.Name)}Id: string;");
+                        sb.AppendLine($"{Indent}{ToCamelCase(rel.Name)}Name: string | null;");
                     }
                 }
                 sb.AppendLine("}");
@@ -248,14 +258,4 @@ public class TypeScriptTypeGenerator
         };
     }
 
-    public static string ToCamelCase(string name)
-    {
-        if (string.IsNullOrEmpty(name)) return name;
-        return char.ToLower(name[0]) + name[1..];
-    }
-
-    private static string EscapeString(string input)
-    {
-        return input.Replace("\\", "\\\\").Replace("\"", "\\\"");
-    }
 }

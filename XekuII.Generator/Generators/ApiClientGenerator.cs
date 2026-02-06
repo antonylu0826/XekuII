@@ -1,5 +1,6 @@
 using System.Text;
 using XekuII.Generator.Models;
+using static XekuII.Generator.Utilities.StringUtils;
 
 namespace XekuII.Generator.Generators;
 
@@ -16,8 +17,8 @@ public class ApiClientGenerator
         var sb = new StringBuilder();
         var entityName = entity.Entity;
         var pluralName = Pluralize(entityName);
-        var camelName = TypeScriptTypeGenerator.ToCamelCase(entityName);
-        var endpoint = $"/{TypeScriptTypeGenerator.ToCamelCase(pluralName)}";
+        var camelName = ToCamelCase(entityName);
+        var endpoint = $"/{ToCamelCase(pluralName)}";
         var details = entity.Relations.Where(r => r.Type == "detail").ToList();
 
         // Header
@@ -81,7 +82,7 @@ public class ApiClientGenerator
         // Detail CRUD endpoints
         foreach (var detail in details)
         {
-            var detailCamel = TypeScriptTypeGenerator.ToCamelCase(detail.Name);
+            var detailCamel = ToCamelCase(detail.Name);
 
             // GET items list
             sb.AppendLine();
@@ -110,24 +111,4 @@ public class ApiClientGenerator
         return sb.ToString();
     }
 
-    private static string ToKebabCase(string name)
-    {
-        var result = new StringBuilder();
-        for (int i = 0; i < name.Length; i++)
-        {
-            if (char.IsUpper(name[i]) && i > 0)
-                result.Append('-');
-            result.Append(char.ToLower(name[i]));
-        }
-        return result.ToString();
-    }
-
-    private static string Pluralize(string name)
-    {
-        if (name.EndsWith("y") && !name.EndsWith("ay") && !name.EndsWith("ey") && !name.EndsWith("oy") && !name.EndsWith("uy"))
-            return name[..^1] + "ies";
-        if (name.EndsWith("s") || name.EndsWith("x") || name.EndsWith("ch") || name.EndsWith("sh"))
-            return name + "es";
-        return name + "s";
-    }
 }

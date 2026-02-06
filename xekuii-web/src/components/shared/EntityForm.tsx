@@ -36,6 +36,7 @@ interface EntityFormProps {
   loading?: boolean;
   submitLabel?: string;
   onCancel?: () => void;
+  children?: ReactNode;
 }
 
 export function EntityForm({
@@ -47,6 +48,7 @@ export function EntityForm({
   loading = false,
   submitLabel = "Save",
   onCancel,
+  children,
 }: EntityFormProps) {
   const form = useForm({
     resolver: zodResolver(schema),
@@ -124,6 +126,7 @@ export function EntityForm({
             })}
           </div>
         ))}
+        {children}
         <div className="flex gap-2 pt-4">
           <Button type="submit" disabled={loading}>
             {loading ? "Saving..." : submitLabel}
